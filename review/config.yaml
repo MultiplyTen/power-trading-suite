@@ -1,0 +1,81 @@
+db_path: ../database/master.db
+project_paths:
+  load_forecast: ../load_forecast
+  coefficient: ../coefficient_opt
+exchange_dir: ../exchange
+data:
+  load_excel: ./data/load.xlsx
+  price_excel: ./data/price.xlsx
+  db_path: ../database/master.db
+output_dir: ./output
+review_date: 'today'
+decision_cutoff_hour: 12
+decision_cutoff_minute: 30
+# 调参回放滞后（日常到达口径；须小于M2/M3观测滞后6，tuning_worker守卫）。
+# 晚到修订不再阻塞建议生成：多版本硬拦截待裁决，其余晚到值透明记录（suggestions.late_arrival_notice）。
+actual_lag_days: 5
+# 任务专属窗口（2026-10-14阶段4）：负荷30天；价格/风险延长至60天提高统计功效。
+# 各任务前2/3天选择、后1/3天验证；suggest_window_days 保留为未列出任务的兜底默认。
+suggest_window_days: 30
+suggest_window_days_by_task:
+  load: 30
+  price: 60
+  risk: 60
+improve_threshold: 0.05
+# 已弃用：价差基准现按对账窗口无条件多数基准自动计算（metrics.analyze），保留仅为历史配置兼容。
+price_baseline_accuracy: 0.6
+evidence_certified: false
+candidate_grid:
+  load_forecast:
+    models.portfolio.ridge_alpha:
+    - 100
+    - 1000
+    models.portfolio.cooling_threshold:
+    - 24
+    - 28
+    models.portfolio.use_weather:
+    - false
+    models.portfolio.name:
+    - baseline_ridge
+    - residual_zero
+    models.portfolio.half_life_days:
+    - 7
+    - 21
+  coefficient:
+    ridge_alpha:
+    - 10
+    - 1000
+    t_base:
+    - 24
+    - 28
+    use_weather:
+    - false
+    use_load_feature:
+    - false
+    model_name:
+    - ridge
+    - extra_trees
+    lambda_risk:
+    - 0.3
+    - 1.0
+    confidence:
+    - 0.85
+    - 0.95
+    error_shrink:
+    - 0.5
+    - 1.5
+    smooth_limit:
+    - 0.03
+    - 0.08
+    backtest_window_days:
+    - 90
+    - 120
+import_research_replay: true
+# 日常到达节奏（供预测信息边界校验；不含settlement/declaration）。
+# settlement=结算对账等待期，保守等修订落地（曾发生D+14修订），与预测信息边界解耦。
+actual_lag_days_by_metric:
+  load: 4
+  da: 5
+  rt: 5
+  settlement: 14
+  declaration: 0

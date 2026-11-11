@@ -1,0 +1,644 @@
+{
+  "status": "passed",
+  "schema_version": 1,
+  "files": 21,
+  "versions": 21,
+  "active_rows": 410390,
+  "shared_consistency": "passed",
+  "tables": [
+    {
+      "table": "current_coef_actual_load",
+      "source": "coefficient_opt/data/actual_load.csv",
+      "sheet": "data",
+      "rows": 3672,
+      "columns": [
+        [
+          "timestamp",
+          "TEXT"
+        ],
+        [
+          "actual_load",
+          "REAL"
+        ]
+      ],
+      "keys": [
+        "timestamp"
+      ]
+    },
+    {
+      "table": "current_coef_price_c24aa5",
+      "source": "coefficient_opt/data/price.xlsx",
+      "sheet": "Sheet1",
+      "rows": 14592,
+      "columns": [
+        [
+          "目标时刻",
+          "TEXT"
+        ],
+        [
+          "日前价格",
+          "REAL"
+        ],
+        [
+          "实时价格",
+          "REAL"
+        ]
+      ],
+      "keys": [
+        "目标时刻"
+      ]
+    },
+    {
+      "table": "current_coef_weather_history",
+      "source": "coefficient_opt/data/weather_history.csv.gz",
+      "sheet": "data",
+      "rows": 12048,
+      "columns": [
+        [
+          "location_id",
+          "TEXT"
+        ],
+        [
+          "city_name",
+          "TEXT"
+        ],
+        [
+          "region",
+          "TEXT"
+        ],
+        [
+          "valid_time",
+          "TEXT"
+        ],
+        [
+          "temperature_2m",
+          "REAL"
+        ],
+        [
+          "relative_humidity_2m",
+          "INTEGER"
+        ],
+        [
+          "precipitation",
+          "REAL"
+        ],
+        [
+          "shortwave_radiation",
+          "REAL"
+        ],
+        [
+          "wind_speed_100m",
+          "REAL"
+        ],
+        [
+          "cloud_cover",
+          "INTEGER"
+        ],
+        [
+          "assumed_available_time",
+          "TEXT"
+        ],
+        [
+          "mode",
+          "TEXT"
+        ],
+        [
+          "availability_basis",
+          "TEXT"
+        ],
+        [
+          "source_sha256",
+          "TEXT"
+        ],
+        [
+          "retrieved_at",
+          "TEXT"
+        ],
+        [
+          "issue_time",
+          "TEXT"
+        ],
+        [
+          "source_url",
+          "TEXT"
+        ]
+      ],
+      "keys": [
+        "location_id",
+        "valid_time"
+      ]
+    },
+    {
+      "table": "current_load_customer_mapping",
+      "source": "load_forecast/data/customer_mapping.csv",
+      "sheet": "data",
+      "rows": 16,
+      "columns": [
+        [
+          "entity_id",
+          "TEXT"
+        ],
+        [
+          "customer_name",
+          "TEXT"
+        ],
+        [
+          "city_name",
+          "TEXT"
+        ],
+        [
+          "mapping_status",
+          "TEXT"
+        ],
+        [
+          "evidence",
+          "TEXT"
+        ],
+        [
+          "meter_address_verified",
+          "INTEGER"
+        ]
+      ],
+      "keys": [
+        "entity_id"
+      ]
+    },
+    {
+      "table": "current_load_customers",
+      "source": "load_forecast/data/customers.csv",
+      "sheet": "data",
+      "rows": 52272,
+      "columns": [
+        [
+          "entity_id",
+          "TEXT"
+        ],
+        [
+          "date",
+          "TEXT"
+        ],
+        [
+          "hour",
+          "INTEGER"
+        ],
+        [
+          "value",
+          "REAL"
+        ],
+        [
+          "unit",
+          "TEXT"
+        ],
+        [
+          "available_time",
+          "TEXT"
+        ],
+        [
+          "version",
+          "TEXT"
+        ]
+      ],
+      "keys": [
+        "entity_id",
+        "date",
+        "hour"
+      ]
+    },
+    {
+      "table": "current_load_day_ahead",
+      "source": "load_forecast/data/day_ahead.csv",
+      "sheet": "data",
+      "rows": 14592,
+      "columns": [
+        [
+          "entity_id",
+          "TEXT"
+        ],
+        [
+          "date",
+          "TEXT"
+        ],
+        [
+          "hour",
+          "INTEGER"
+        ],
+        [
+          "value",
+          "REAL"
+        ],
+        [
+          "unit",
+          "TEXT"
+        ],
+        [
+          "available_time",
+          "TEXT"
+        ],
+        [
+          "version",
+          "TEXT"
+        ]
+      ],
+      "keys": [
+        "entity_id",
+        "date",
+        "hour"
+      ]
+    },
+    {
+      "table": "current_load_guangdong_cities",
+      "source": "load_forecast/data/guangdong_cities.csv",
+      "sheet": "data",
+      "rows": 21,
+      "columns": [
+        [
+          "location_id",
+          "TEXT"
+        ],
+        [
+          "city_name",
+          "TEXT"
+        ],
+        [
+          "latitude",
+          "REAL"
+        ],
+        [
+          "longitude",
+          "REAL"
+        ],
+        [
+          "region",
+          "TEXT"
+        ]
+      ],
+      "keys": [
+        "location_id"
+      ]
+    },
+    {
+      "table": "current_load_portfolio",
+      "source": "load_forecast/data/portfolio.csv",
+      "sheet": "data",
+      "rows": 3672,
+      "columns": [
+        [
+          "entity_id",
+          "TEXT"
+        ],
+        [
+          "date",
+          "TEXT"
+        ],
+        [
+          "hour",
+          "INTEGER"
+        ],
+        [
+          "value",
+          "REAL"
+        ],
+        [
+          "unit",
+          "TEXT"
+        ],
+        [
+          "available_time",
+          "TEXT"
+        ],
+        [
+          "version",
+          "TEXT"
+        ]
+      ],
+      "keys": [
+        "entity_id",
+        "date",
+        "hour"
+      ]
+    },
+    {
+      "table": "current_load_real_time",
+      "source": "load_forecast/data/real_time.csv",
+      "sheet": "data",
+      "rows": 14592,
+      "columns": [
+        [
+          "entity_id",
+          "TEXT"
+        ],
+        [
+          "date",
+          "TEXT"
+        ],
+        [
+          "hour",
+          "INTEGER"
+        ],
+        [
+          "value",
+          "REAL"
+        ],
+        [
+          "unit",
+          "TEXT"
+        ],
+        [
+          "available_time",
+          "TEXT"
+        ],
+        [
+          "version",
+          "TEXT"
+        ]
+      ],
+      "keys": [
+        "entity_id",
+        "date",
+        "hour"
+      ]
+    },
+    {
+      "table": "current_load_system_load",
+      "source": "load_forecast/data/system_load.csv",
+      "sheet": "data",
+      "rows": 11712,
+      "columns": [
+        [
+          "entity_id",
+          "TEXT"
+        ],
+        [
+          "date",
+          "TEXT"
+        ],
+        [
+          "hour",
+          "INTEGER"
+        ],
+        [
+          "value",
+          "REAL"
+        ],
+        [
+          "unit",
+          "TEXT"
+        ],
+        [
+          "available_time",
+          "TEXT"
+        ],
+        [
+          "version",
+          "TEXT"
+        ]
+      ],
+      "keys": [
+        "entity_id",
+        "date",
+        "hour"
+      ]
+    },
+    {
+      "table": "current_load_weather_history",
+      "source": "load_forecast/data/weather_history.csv.gz",
+      "sheet": "data",
+      "rows": 253008,
+      "columns": [
+        [
+          "location_id",
+          "TEXT"
+        ],
+        [
+          "city_name",
+          "TEXT"
+        ],
+        [
+          "region",
+          "TEXT"
+        ],
+        [
+          "valid_time",
+          "TEXT"
+        ],
+        [
+          "temperature_2m",
+          "REAL"
+        ],
+        [
+          "relative_humidity_2m",
+          "INTEGER"
+        ],
+        [
+          "precipitation",
+          "REAL"
+        ],
+        [
+          "shortwave_radiation",
+          "REAL"
+        ],
+        [
+          "wind_speed_100m",
+          "REAL"
+        ],
+        [
+          "cloud_cover",
+          "INTEGER"
+        ],
+        [
+          "assumed_available_time",
+          "TEXT"
+        ],
+        [
+          "mode",
+          "TEXT"
+        ],
+        [
+          "availability_basis",
+          "TEXT"
+        ],
+        [
+          "source_sha256",
+          "TEXT"
+        ],
+        [
+          "retrieved_at",
+          "TEXT"
+        ],
+        [
+          "issue_time",
+          "TEXT"
+        ],
+        [
+          "source_url",
+          "TEXT"
+        ]
+      ],
+      "keys": [
+        "location_id",
+        "valid_time"
+      ]
+    },
+    {
+      "table": "current_load_weather_live",
+      "source": "load_forecast/data/weather_live.csv.gz",
+      "sheet": "data",
+      "rows": 3528,
+      "columns": [
+        [
+          "valid_time",
+          "TEXT"
+        ],
+        [
+          "temperature_2m",
+          "REAL"
+        ],
+        [
+          "relative_humidity_2m",
+          "INTEGER"
+        ],
+        [
+          "precipitation",
+          "REAL"
+        ],
+        [
+          "shortwave_radiation",
+          "REAL"
+        ],
+        [
+          "wind_speed_100m",
+          "REAL"
+        ],
+        [
+          "cloud_cover",
+          "INTEGER"
+        ],
+        [
+          "location_id",
+          "TEXT"
+        ],
+        [
+          "city_name",
+          "TEXT"
+        ],
+        [
+          "region",
+          "TEXT"
+        ],
+        [
+          "retrieved_at",
+          "TEXT"
+        ],
+        [
+          "issue_time",
+          "TEXT"
+        ],
+        [
+          "assumed_available_time",
+          "TEXT"
+        ],
+        [
+          "availability_basis",
+          "TEXT"
+        ],
+        [
+          "mode",
+          "TEXT"
+        ],
+        [
+          "source_sha256",
+          "TEXT"
+        ],
+        [
+          "source_url",
+          "TEXT"
+        ]
+      ],
+      "keys": [
+        "location_id",
+        "valid_time"
+      ]
+    },
+    {
+      "table": "current_review_load_c24aa5",
+      "source": "review/data/load.xlsx",
+      "sheet": "Sheet1",
+      "rows": 3672,
+      "columns": [
+        [
+          "目标时刻",
+          "TEXT"
+        ],
+        [
+          "实际负荷",
+          "REAL"
+        ]
+      ],
+      "keys": [
+        "目标时刻"
+      ]
+    },
+    {
+      "table": "current_review_price_c24aa5",
+      "source": "review/data/price.xlsx",
+      "sheet": "Sheet1",
+      "rows": 14592,
+      "columns": [
+        [
+          "目标时刻",
+          "TEXT"
+        ],
+        [
+          "日前价格",
+          "REAL"
+        ],
+        [
+          "实时价格",
+          "REAL"
+        ]
+      ],
+      "keys": [
+        "目标时刻"
+      ]
+    },
+    {
+      "table": "current_shared_calendar",
+      "source": "database/calendar.csv",
+      "sheet": "data",
+      "rows": 8401,
+      "columns": [
+        [
+          "date",
+          "TEXT"
+        ],
+        [
+          "is_workday",
+          "INTEGER"
+        ],
+        [
+          "has_holiday_name",
+          "INTEGER"
+        ],
+        [
+          "holiday_name",
+          "TEXT"
+        ],
+        [
+          "source",
+          "TEXT"
+        ],
+        [
+          "available_time",
+          "TEXT"
+        ],
+        [
+          "evidence_status",
+          "TEXT"
+        ]
+      ],
+      "keys": [
+        "date"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+template_path: ./data/输入模板.xlsx
+db_path: ../database/master.db
+log_path: ./data/import_log.csv
+export_dir: ./output
+price_range:
+- -1000
+- 5000
+load_unit: MWh
+timezone: Asia/Shanghai
+price_96_aggregation: arithmetic_mean_proxy
+partial_quarter_hour: reject
+inbox_dir: ./data/inbox
+processed_dir: ./data/processed
+load_cross_check_tolerance: 0.01
+system_load_range:
+- 0
+- 200000
+disclosure_rows:
+- 统调负荷(MW)
+retail_unit: MWh
+organization_unit: MWh
+weather_auto:
+  enabled: true
+  forecast_days: 7
+  refresh_interval_hours: 1
+  max_cache_age_hours: 12
+  timeout_seconds: 40
+  retries: 3

@@ -1,0 +1,3 @@
+# 四模块接入版验收
+
+请查看 [INGESTION_ACCEPTANCE.md](INGESTION_ACCEPTANCE.md)。

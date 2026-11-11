@@ -1,0 +1,7 @@
+db_path: ../database/master.db
+inputs_dir: ../inputs/disclosure
+output_dir: ./output
+timezone: Asia/Shanghai
+forecast_available_boundary: target_date_minus_1_12:00
+expected_forecast_zip_pattern: 披露中心-中调信息披露-预测(*.zip
+expected_actual_zip_pattern: 披露中心-中调信息披露-实际(*.zip

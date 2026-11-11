@@ -1,0 +1,65 @@
+{
+  "status": "completed",
+  "snapshot_id": "disclosure_e892bca5a13ea14d340ebadbc826d08cd14422a594e724eaf16bb8d3b464c294",
+  "created_at": "2026-10-14T10:05:47+08:00",
+  "zip_count": 11,
+  "workbook_count": 303,
+  "new_workbook_count": 0,
+  "zips": [
+    {
+      "zip": "披露中心-中调信息披露-实际(2026-10-01~2026-10-15).zip",
+      "members": 15,
+      "new_workbooks": 0
+    },
+    {
+      "zip": "披露中心-中调信息披露-预测(2026-01-01~2026-01-31).zip",
+      "members": 31,
+      "new_workbooks": 0
+    },
+    {
+      "zip": "披露中心-中调信息披露-预测(2026-02-01~2026-02-28).zip",
+      "members": 28,
+      "new_workbooks": 0
+    },
+    {
+      "zip": "披露中心-中调信息披露-预测(2026-03-01~2026-03-31).zip",
+      "members": 31,
+      "new_workbooks": 0
+    },
+    {
+      "zip": "披露中心-中调信息披露-预测(2026-04-01~2026-04-30).zip",
+      "members": 30,
+      "new_workbooks": 0
+    },
+    {
+      "zip": "披露中心-中调信息披露-预测(2026-05-01~2026-05-31).zip",
+      "members": 31,
+      "new_workbooks": 0
+    },
+    {
+      "zip": "披露中心-中调信息披露-预测(2026-06-01~2026-06-30).zip",
+      "members": 30,
+      "new_workbooks": 0
+    },
+    {
+      "zip": "披露中心-中调信息披露-预测(2026-07-01~2026-07-31).zip",
+      "members": 31,
+      "new_workbooks": 0
+    },
+    {
+      "zip": "披露中心-中调信息披露-预测(2026-08-01~2026-08-31).zip",
+      "members": 31,
+      "new_workbooks": 0
+    },
+    {
+      "zip": "披露中心-中调信息披露-预测(2026-09-01~2026-09-30).zip",
+      "members": 30,
+      "new_workbooks": 0
+    },
+    {
+      "zip": "披露中心-中调信息披露-预测(2026-10-01~2026-10-15).zip",
+      "members": 15,
+      "new_workbooks": 0
+    }
+  ]
+}

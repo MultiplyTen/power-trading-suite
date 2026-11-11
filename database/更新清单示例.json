@@ -1,0 +1,6 @@
+{
+  "files": [
+    {"dataset": "load_forecast/data/weather_history.csv.gz", "file": "incoming/weather_history.csv.gz"},
+    {"dataset": "coefficient_opt/data/weather_history.csv.gz", "file": "incoming/guangzhou_weather.csv.gz"}
+  ]
+}

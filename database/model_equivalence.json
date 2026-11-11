@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "comparisons": [
+    {
+      "sheet": "明日24点总览",
+      "rows": 24,
+      "numeric_columns": 21,
+      "equal": true
+    },
+    {
+      "sheet": "24小时系数",
+      "rows": 24,
+      "numeric_columns": 11,
+      "equal": true
+    }
+  ]
+}

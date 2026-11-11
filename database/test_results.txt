@@ -1,0 +1,20 @@
+test_available_time_can_be_added_to_initially_blank_column (__main__.StoreTests) ... ok
+test_batch_is_atomic (__main__.StoreTests) ... ok
+test_content_corruption_detected (__main__.StoreTests) ... ok
+test_cross_project_conflict_rejects_batch (__main__.StoreTests) ... ok
+test_duplicate_import_is_idempotent (__main__.StoreTests) ... ok
+test_duplicate_keys_rollback (__main__.StoreTests) ... ok
+test_edited_or_deleted_cache_recovers_exact_bytes (__main__.StoreTests) ... ok
+test_negative_reconciliation_load_rejected (__main__.StoreTests) ... ok
+test_non_hourly_actual_timestamp_rejected (__main__.StoreTests) ... ok
+test_non_owner_cannot_enter_lock (__main__.StoreTests) ... ok
+test_schema_change_rejected (__main__.StoreTests) ... ok
+test_shared_input_update_invalidates_tuning_cache (__main__.StoreTests) ... ok
+test_updated_data_retains_version_and_backup (__main__.StoreTests) ... ok
+test_wrong_unit_rejected (__main__.StoreTests) ... ok
+test_wrong_version_cannot_be_activated (__main__.StoreTests) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.162s
+
+OK

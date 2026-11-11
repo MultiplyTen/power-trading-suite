@@ -1,0 +1,53 @@
+db_path: ../database/master.db
+forecast_date: 'tomorrow'
+decision_cutoff_hour: 12
+decision_cutoff_minute: 30
+research_mode: true
+city:
+  latitude: 23.1291
+  longitude: 113.2644
+price_excel_path: ./data/price.xlsx
+load_forecast_path: ../exchange/current_load/predict_YYYYMMDD.xlsx
+fallback_load_column_sheet: 负荷预测
+actual_load_path: ./data/actual_load.csv
+historical_load_forecasts_path: null
+weather_history_path: ./data/weather_history.csv.gz
+output_dir: ./output
+cache_path: ../database/master.db
+backtest_window_days: 90
+validation_days: 30
+# 信息边界与M2一致=库内最新完整日（main.py硬校验相等）；晚到修订由review裁决机制处理。
+lag_days: 6
+training_days: 180
+# 场景近期加权：整日成对场景按半衰期指数加权（最近一天最大），null/0 为等权。
+scenario_weight_halflife_days: 30
+ridge_alpha: 100.0
+k_min: 0.8
+k_max: 1.2
+k_step: 0.01
+smooth_limit: 0.05
+cvar_alpha: 0.9
+lambda_risk: 0.5
+daily_loss_limit: auto
+confidence: 0.9
+error_shrink: 1.0
+deviation_lower_ratio: 0.8
+deviation_upper_ratio: 1.2
+# 偏差考核=获利回收（2026-10-14业务确认）：±20%带外超带部分按方向价差回收收益。
+# deviation_rule: profit_recovery 启用；deviation_cost_per_mwh 仅旧 fixed_fee 口径使用，保留为0。
+deviation_rule: profit_recovery
+deviation_cost_per_mwh: 0.0
+price_basis_confirmed: false
+load_unit_confirmed: false
+availability_certified: false
+network_enabled: false
+model_name: ridge
+t_base: 26
+use_weather: true
+use_load_feature: true
+
+# 96点完整小时均值，仅使用决策前已接收数据；默认关闭待独立回测。
+use_system_load_feature: false
+system_load_lag_days: 2
+use_disclosure_features: true
+consume_m2_publication: true

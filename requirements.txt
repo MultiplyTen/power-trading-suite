@@ -1,0 +1,13 @@
+# v1.2 双栈验证（2026-10-14，run_tests_windows.py 116 项全绿）：
+#  A栈 = 本文件锁定版本（Windows Python 3.9.25 / macOS 3.9.6 实测通过）
+#  B栈 = macOS Python 3.13.12（pandas 3.0.5 / numpy 2.5.2 / scikit-learn 1.9.0 / scipy 1.18.0 / PyYAML 6.0.3 / joblib 1.5.3 / openpyxl 3.1.5）
+# 注：run_tests_windows.py 已修复 Python 3.9 兼容（tempfile ignore_cleanup_errors 为 3.10+ 参数）。
+numpy==1.26.4
+pandas==2.2.3
+scikit-learn==1.6.1
+openpyxl==3.1.5
+requests==2.32.5
+chinese-calendar==1.11.0
+PyYAML==6.0.3
+joblib==1.5.3
+scipy==1.13.1

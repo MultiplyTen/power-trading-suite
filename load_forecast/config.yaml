@@ -1,0 +1,181 @@
+db_path: ../database/master.db
+disclosure:
+  use_features: true
+  input_contract: versioned_forecast_only
+  semantic_status: reserve_and_constraint_meaning_pending
+backtest:
+  bootstrap_samples: 2000
+  bootstrap_unit: day
+  split_method: rolling_origin
+  # rolling_relative：窗口随目标日滚动（test=目标日前1~31天、validation=前32~61天、
+  # selection=前62~91天），消除参数选择停滞；backtest模式锚=test_end保持固定供M4候选回测。
+  # fixed：完全使用下方固定日期（旧行为）。
+  window_mode: rolling_relative
+  test_days: 31
+  validation_days: 30
+  selection_days: 30
+  test_end: '2026-08-31'
+  test_start: '2026-08-01'
+  validation_end: '2026-07-30'
+  validation_start: '2026-07-01'
+  model_selection_start: '2026-06-01'
+  model_selection_end: '2026-06-30'
+input:
+  availability_certified: false
+  customer_unit: MWh
+  customer_value_kind: interval_energy
+  directory: ./data
+  excel_path: ./data/market_input.xlsx
+  format: csv
+  price_15m_to_hour: require_hourly_source
+  price_basis: guangdong_user_settlement
+  price_basis_confirmed: false
+  price_unit: CNY_per_MWh
+  sheets:
+    customer_mapping: 客户地区映射
+    customers: 客户负荷明细
+    day_ahead: 日前价格
+    portfolio: 客户组合负荷
+    production_plan: 客户生产计划
+    real_time: 实时价格
+    supply_demand: 供需信息
+    system_load: 全省统调负荷
+    versions: 数据版本信息
+  system_unit: MW
+  time_label: interval_start
+  unit_confirmed: false
+  negative_load_policy: exclude_with_report
+models:
+  customer:
+    cooling_threshold: 26
+    name: baseline_ridge
+    ridge_alpha: 1000
+  day_ahead:
+    name: price_residual_ridge
+    ridge_alpha: 100
+  portfolio:
+    cooling_threshold: 28
+    name: baseline_ridge
+    ridge_alpha: 1000
+    use_weather: true
+    half_life_days: 14
+  real_time:
+    name: price_residual_ridge
+    ridge_alpha: 100
+  spread_direction:
+    C_candidates:
+    - 0.01
+    - 0.1
+    - 1.0
+    name: logistic_with_baseline_selection
+    probability_baseline_days: 90
+  system_load:
+    cooling_threshold: 24
+    name: baseline_ridge
+    ridge_alpha: 100
+price_direction:
+  display_neutral_band: 20
+  reference: lag2_same_hour
+project:
+  model_version: load-suite-v1.1-disclosure
+  cache_dir: ./cache
+  model_dir: ./saved_models
+  output_dir: ./output
+  seed: 42
+  timezone: Asia/Shanghai
+run:
+  decision_cutoff_hour: 12
+  decision_cutoff_minute: 30
+  mode: forecast
+  # 信息边界=库内最新完整日（用户2026-10-14确认：全部用已知数据跑预测）。
+  # 日常到达=负荷D+4/价格D+5，滞后6覆盖；晚到修订由review多版本拦截待裁决，不再放大全局滞后
+  # （曾为17=一次性事件推高的最坏口径，代价=每次预测放弃约10天最新数据，含国庆整周）。
+  observation_lag_days: 6
+  reference_days: 0
+  strict_availability: false
+  target_date: 'tomorrow'
+  write_back: false
+strategy:
+  deviation_lower_ratio: 0.8
+  deviation_upper_ratio: 1.2
+  k_max: 1.2
+  k_min: 0.8
+  # 与 coefficient_opt.k_step 统一为0.01网格，保证M2研究候选与M3优化解同网格可对账。
+  k_step: 0.01
+  max_daily_adjustment_energy: null
+  max_daily_expected_loss: null
+  min_scenarios_per_hour: 20
+  name: scenario_risk_optimizer
+  neutral_k: 1.0
+  probability_deadband: 0.1
+  probability_deadband_candidates:
+  - 0.0
+  - 0.1
+  - 0.2
+  recovery_rule_basis: user_workbook
+  risk_lambda: 1.0
+  risk_lambda_candidates:
+  - 0.0
+  - 0.3
+  - 1.0
+  scenario_days: 56
+  tail_fraction: 0.1
+  validation_gate:
+    min_accuracy_gain_vs_majority: 0.03
+    min_balanced_accuracy: 0.56
+    require_confirmed_price_basis: true
+    require_positive_day_block_ci: true
+    require_verified_availability: true
+training:
+  baseline_window_days: 28
+  cooling_threshold_candidates:
+  - 24
+  - 26
+  - 28
+  half_life_days: 14
+  min_history_days: 56
+  mode: rolling
+  retrain_every_days: 1
+  ridge_alpha_candidates:
+  - 10
+  - 100
+  - 1000
+  scale_floor: 0.001
+  scale_window_hours: 672
+  window_days: 120
+  selection_mode: fixed
+  # 日型粒度：six=六类（周一/周二至四/周五/周末休/节假日休/调休上班，不足软借大类）。
+  # 2026-10-14实证（同滚动窗口对比）：当前45天客户数据下six过拟合——选择窗口微优但
+  # 测试窗口全面更差（portfolio 0.173 vs 0.137，system_load 0.097 vs 0.061，da/rt MAE亦劣）。
+  # 默认binary；待负荷历史>6个月后可重估six。
+  day_type_granularity: binary
+  day_type_soft_weight: 0.5
+  day_type_min_weight: 0.3
+  # 价格尖峰two-part：尖峰概率分类（DA/RT>因果滚动P90）作为回归特征进消融候选组。
+  spike_two_part: true
+weather:
+  beyond_forecast: historical_climatology_reference
+  customer_mapping_file: null
+  enable_network: false
+  future_file: ./data/weather_live.csv.gz
+  future_source: forecast
+  history_file: ./data/weather_history.csv.gz
+  history_forecast_source: previous_runs
+  locations_file: ./data/guangdong_cities.csv
+  max_live_cache_age_hours: 12
+  observation_source: archive
+  optional_variables:
+  - weather_code
+  portfolio_weight_days: 28
+  previous_run_lead_days: 2
+  provider: open_meteo
+  province_weight_mode: equal_proxy
+  retries: 3
+  timeout_seconds: 30
+  variables:
+  - temperature_2m
+  - relative_humidity_2m
+  - precipitation
+  - shortwave_radiation
+  - wind_speed_100m
+  - cloud_cover

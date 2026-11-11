@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.joblib
+.DS_Store
+*.log
+
+# 数据库与数据（不入库）
+database/*.db
+database/*.db-*
+load_forecast/data/*
+!load_forecast/data/README.md
+load_forecast/saved_models/
+load_forecast/output/
+coefficient_opt/data/*
+!coefficient_opt/data/README.md
+coefficient_opt/output/
+review/data/*
+!review/data/README.md
+review/output/
+data_ingest/output/
+data_ingest/data/inbox/
+data_ingest/data/processed/
+data_ingest/data/*.csv
+daily_inbox/
+daily_processed/
+inputs/
+
+# 本地环境
+.workbuddy/
+_config_backup_*/
+.venv/

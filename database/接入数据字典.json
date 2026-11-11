@@ -1,0 +1,658 @@
+{
+  "负荷": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "date",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 1
+      },
+      {
+        "cid": 1,
+        "name": "hour",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 2
+      },
+      {
+        "cid": 2,
+        "name": "value",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 3,
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 4,
+        "name": "source",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 5,
+        "name": "available_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 6,
+        "name": "evidence",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 7,
+        "name": "source_sha",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 8,
+        "name": "source_cell",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      }
+    ],
+    "rows": 3672
+  },
+  "日前价": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "date",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 1
+      },
+      {
+        "cid": 1,
+        "name": "hour",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 2
+      },
+      {
+        "cid": 2,
+        "name": "value",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 3,
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 4,
+        "name": "source",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 5,
+        "name": "available_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 6,
+        "name": "evidence",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 7,
+        "name": "source_sha",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 8,
+        "name": "source_cell",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      }
+    ],
+    "rows": 14592
+  },
+  "实时价": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "date",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 1
+      },
+      {
+        "cid": 1,
+        "name": "hour",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 2
+      },
+      {
+        "cid": 2,
+        "name": "value",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 3,
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 4,
+        "name": "source",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 5,
+        "name": "available_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 6,
+        "name": "evidence",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 7,
+        "name": "source_sha",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 8,
+        "name": "source_cell",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      }
+    ],
+    "rows": 14592
+  },
+  "负荷预测": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "date",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 1
+      },
+      {
+        "cid": 1,
+        "name": "hour",
+        "type": "INTEGER",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 2
+      },
+      {
+        "cid": 2,
+        "name": "value",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 3,
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 4,
+        "name": "source",
+        "type": "TEXT",
+        "notnull": 1,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 5,
+        "name": "available_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 6,
+        "name": "evidence",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 7,
+        "name": "source_sha",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 8,
+        "name": "source_cell",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      }
+    ],
+    "rows": 0
+  },
+  "接入批次": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 1
+      },
+      {
+        "cid": 1,
+        "name": "imported_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 2,
+        "name": "source",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 3,
+        "name": "sha256",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 4,
+        "name": "payload",
+        "type": "BLOB",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 5,
+        "name": "summary_json",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      }
+    ],
+    "rows": 3
+  },
+  "接入修订": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 1
+      },
+      {
+        "cid": 1,
+        "name": "batch_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 2,
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 3,
+        "name": "date",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 4,
+        "name": "hour",
+        "type": "INTEGER",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 5,
+        "name": "old_value",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 6,
+        "name": "new_value",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 7,
+        "name": "available_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 8,
+        "name": "source_cell",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      }
+    ],
+    "rows": 0
+  },
+  "负荷预测记录": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "run_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 1,
+        "name": "target",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 2,
+        "name": "load",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 3,
+        "name": "da",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 4,
+        "name": "rt",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 5,
+        "name": "k",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 6,
+        "name": "research_k",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 7,
+        "name": "published_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 8,
+        "name": "model_version",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 9,
+        "name": "config_json",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 10,
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 11,
+        "name": "source",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      }
+    ],
+    "rows": 2448
+  },
+  "系数决策记录": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "run_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 1,
+        "name": "target",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 2,
+        "name": "load",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 3,
+        "name": "da",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 4,
+        "name": "rt",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 5,
+        "name": "k",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 6,
+        "name": "research_k",
+        "type": "REAL",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 7,
+        "name": "published_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 8,
+        "name": "model_version",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 9,
+        "name": "config_json",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 10,
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 11,
+        "name": "source",
+        "type": "TEXT",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 12,
+        "name": "declaration_quantity",
+        "type": "",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      },
+      {
+        "cid": 13,
+        "name": "research_declaration_quantity",
+        "type": "",
+        "notnull": 0,
+        "default": null,
+        "primary_key": 0
+      }
+    ],
+    "rows": 6552
+  }
+}

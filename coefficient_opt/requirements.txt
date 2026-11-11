@@ -1,0 +1,10 @@
+# Validated on Python 3.9.25; run main.py with this environment.
+numpy==1.26.4
+pandas==2.2.3
+scikit-learn==1.6.1
+openpyxl==3.1.5
+requests==2.32.5
+chinese-calendar==1.11.0
+PyYAML==6.0.3
+joblib==1.5.3
+scipy==1.13.1

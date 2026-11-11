@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四模块电力交易系统 · 说明文档 v1.2</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F5F5F3;color:#2C2C2A;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.75}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 28px 64px}
+header.hero{background:#FFFFFF;border:1px solid #E4E2DC;border-radius:16px;padding:36px 44px;margin-bottom:26px}
+header.hero h1{font-size:26px;margin:0 0 10px;font-weight:600}
+header.hero .sub{color:#5F5E5A;font-size:14px}
+header.hero .meta{margin-top:16px;font-size:12.5px;color:#5F5E5A}
+section{background:#FFFFFF;border:1px solid #E4E2DC;border-radius:14px;padding:28px 34px;margin-bottom:24px}
+h2{font-size:19px;margin:2px 0 6px;font-weight:600;border-left:4px solid #534AB7;padding-left:12px}
+h3{font-size:15px;margin:18px 0 6px;font-weight:600}
+p.lead{color:#444441}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+th{background:#F1EFE8;text-align:left;padding:8px 12px;border:1px solid #E4E2DC;font-weight:500;white-space:nowrap}
+td{padding:8px 12px;border:1px solid #E4E2DC;vertical-align:top}
+figure{margin:18px 0 8px;padding:14px 10px 8px;background:#FDFDFC;border:1px dashed #E4E2DC;border-radius:12px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:12px;color:#5F5E5A;margin-top:8px;text-align:center}
+.card{border:1px solid #E4E2DC;border-radius:12px;padding:18px 22px;margin:14px 0;background:#FCFCFB}
+.badge{display:inline-block;padding:2px 12px;border-radius:999px;font-size:12px;font-weight:500;margin-right:10px}
+.b-m1{background:#E6F1FB;color:#0C447C}.b-m2{background:#E1F5EE;color:#085041}.b-m3{background:#EEEDFE;color:#3C3489}.b-m4{background:#FAECE7;color:#712B13}
+.note{background:#FAF7EC;border:1px solid #EFE4B8;border-radius:10px;padding:12px 18px;font-size:13px;margin:14px 0}
+.note b{color:#633806}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+code{background:#F1EFE8;padding:1px 6px;border-radius:4px;font-size:12.5px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.tl{display:flex;margin:20px 0 6px}
+.tl-item{flex:1;padding:12px 16px;border-left:3px solid #D3D1C7}
+.tl-item b{display:block;font-size:14px;margin-bottom:2px}
+.tl-item small{color:#5F5E5A;font-size:12px;line-height:1.6;display:block}
+.tl-item.now{border-left-color:#534AB7;background:#FBFAFE}
+footer{color:#5F5E5A;font-size:12px;text-align:center;margin-top:8px}
+.kv{font-size:13px;color:#444441}
+.kv b{font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+<h1>四模块电力交易系统 · 说明文档</h1>
+<div class="sub">广东现货售电侧研究系统：数据接入 → 负荷/价格预测 → 申报系数优化 → 复盘调参，一个闭环。</div>
+<div class="meta">版本 v1.2.0-optimized-20261014 ｜ 116 项测试双栈全绿（Python 3.9 / 3.13） ｜ 文档生成：2026-10-20</div>
+</header>
+
+<!-- ============ 0 一页速览 ============ -->
+<section>
+<h2>〇、一页速览</h2>
+<table>
+<tr><th style="width:120px">这是什么</th><td>售电公司视角的<b>日前申报研究系统</b>：每天自动把五类交易数据入库，预测明日 24 点负荷与价格，给出"若逐利该报多少"的研究系数，并对昨天的预测做对账归因与调参建议。</td></tr>
+<tr><th>四个模块</th><td><span class="badge b-m1">M1 数据接入</span><span class="badge b-m2">M2 负荷/价格预测</span><span class="badge b-m3">M3 系数优化</span><span class="badge b-m4">M4 复盘调参</span>共享一个 SQLite 事实库 <code>database/master.db</code>（2.3 GB）</td></tr>
+<tr><th>核心边界</th><td><b>研究模式</b>：实际申报系数恒为 1（申报=预测负荷本身）；研究系数仅供人工复核，绝不自动生效。</td></tr>
+<tr><th>规模</th><td>548 文件交付包（压缩 293 MB）｜负荷数据 2026-04 起｜价格 2025-01 起｜16 个客户＋全省统调</td></tr>
+<tr><th>怎么用</th><td>日常文件放 <code>daily_inbox/</code> → 双击 <code>一键日常导入并生成.bat</code> → 全自动：导入→天气→预测→系数→复盘 → 看 3 份报告（十分钟速读路径见第六节）。</td></tr>
+</table>
+</section>
+
+<!-- ============ 1 系统架构 ============ -->
+<section>
+<h2>一、系统架构：一个事实库，四个模块，一个闭环</h2>
+<p class="lead">全部数据进出只有一个地方——<code>master.db</code>。M1 负责往里写干净的事实，M2/M3/M4 从同一个口径往外算，M4 的调参建议经人工确认后回写配置，影响下一轮预测。</p>
+
+<figure>
+<svg viewBox="0 0 900 640" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif" role="img">
+<title>系统架构图</title>
+<desc>数据来源经M1接入写入master.db，M2M3M4消费并输出报告，建议回写config闭环</desc>
+<defs>
+<marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="40" y="30" font-size="13" font-weight="500" fill="#5F5E5A">数据来源（日常文件 → daily_inbox/）</text>
+<g font-size="11" text-anchor="middle">
+<rect x="40" y="44" width="125" height="46" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/><text x="102" y="64" fill="#444441">零售用户电量</text><text x="102" y="80" fill="#5F5E5A">xlsx</text>
+<rect x="179" y="44" width="125" height="46" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/><text x="241" y="64" fill="#444441">现货价格</text><text x="241" y="80" fill="#5F5E5A">xlsx</text>
+<rect x="318" y="44" width="125" height="46" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/><text x="380" y="64" fill="#444441">组织中心实际</text><text x="380" y="80" fill="#5F5E5A">zip</text>
+<rect x="457" y="44" width="125" height="46" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/><text x="519" y="64" fill="#444441">中调实际披露</text><text x="519" y="80" fill="#5F5E5A">zip</text>
+<rect x="596" y="44" width="125" height="46" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/><text x="658" y="64" fill="#444441">次日预测披露</text><text x="658" y="80" fill="#5F5E5A">xlsx</text>
+<rect x="735" y="44" width="125" height="46" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/><text x="797" y="64" fill="#0C447C">自动天气</text><text x="797" y="80" fill="#185FA5">Open-Meteo</text>
+</g>
+<line x1="450" y1="94" x2="450" y2="118" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<rect x="40" y="124" width="820" height="86" rx="10" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="450" y="148" font-size="13" font-weight="500" fill="#0C447C" text-anchor="middle">M1 · 数据接入（data_ingest ＋ disclosure_ingest）</text>
+<text x="450" y="168" font-size="11" fill="#185FA5" text-anchor="middle">按文件名自动分类 → SHA256 幂等（同内容直接跳过） → 清洗与口径校验 → 原子写库</text>
+<text x="450" y="186" font-size="11" fill="#185FA5" text-anchor="middle">负负荷隔离 · 零价当缺失 · 96 点完整才聚合 24h · 失败整批拒绝并列明 sheet/行/列</text>
+<text x="450" y="202" font-size="11" fill="#5F5E5A" text-anchor="middle">成功归档 daily_processed/；失败留在 daily_inbox/ 修正后重跑</text>
+<line x1="450" y1="210" x2="450" y2="248" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<rect x="230" y="254" width="440" height="74" rx="10" fill="#F1EFE8" stroke="#444441" stroke-width="1"/>
+<text x="450" y="278" font-size="13" font-weight="500" fill="#2C2C2A" text-anchor="middle">master.db —— 单一 SQLite 事实源（2.3 GB）</text>
+<text x="450" y="298" font-size="11" fill="#444441" text-anchor="middle">版本化（input_versions / current_ 视图） · payload 保留原始字节</text>
+<text x="450" y="316" font-size="11" fill="#444441" text-anchor="middle">suite_lock 进程锁 · 全链 audit_events 审计</text>
+<rect x="700" y="254" width="160" height="74" rx="8" fill="#FDFDFC" stroke="#888780" stroke-width="0.5" stroke-dasharray="4,3"/>
+<text x="780" y="280" font-size="12" font-weight="500" fill="#2C2C2A" text-anchor="middle">config.yaml × 5</text>
+<text x="780" y="298" font-size="11" fill="#5F5E5A" text-anchor="middle">各模块参数</text>
+<text x="780" y="314" font-size="11" fill="#5F5E5A" text-anchor="middle">（人工确认后改）</text>
+<line x1="330" y1="328" x2="180" y2="380" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<line x1="450" y1="328" x2="450" y2="380" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<line x1="570" y1="328" x2="720" y2="380" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<g>
+<rect x="40" y="386" width="260" height="104" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="170" y="410" font-size="13" font-weight="500" fill="#085041" text-anchor="middle">M2 · 负荷与价格预测</text>
+<text x="170" y="430" font-size="11" fill="#0F6E56" text-anchor="middle">基准 B ＋ 残差 Ridge</text>
+<text x="170" y="447" font-size="11" fill="#0F6E56" text-anchor="middle">消融选择 · 滚动窗口 · 防泄漏三重校验</text>
+<text x="170" y="464" font-size="11" fill="#0F6E56" text-anchor="middle">输出：24 点预测 · 区间 · 发布记录</text>
+<text x="170" y="481" font-size="11" fill="#5F5E5A" text-anchor="middle">load_forecast/</text>
+</g>
+<g>
+<rect x="320" y="386" width="260" height="104" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="450" y="410" font-size="13" font-weight="500" fill="#3C3489" text-anchor="middle">M3 · 申报系数优化</text>
+<text x="450" y="430" font-size="11" fill="#534AB7" text-anchor="middle">90 天场景加权 · LP/MILP 精确解</text>
+<text x="450" y="447" font-size="11" fill="#534AB7" text-anchor="middle">获利回收计价 · 邻域稳健度</text>
+<text x="450" y="464" font-size="11" fill="#534AB7" text-anchor="middle">输出：24 小时研究系数 · 风险审计</text>
+<text x="450" y="481" font-size="11" fill="#5F5E5A" text-anchor="middle">coefficient_opt/（消费 M2 发布）</text>
+</g>
+<g>
+<rect x="600" y="386" width="260" height="104" rx="10" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text x="730" y="410" font-size="13" font-weight="500" fill="#712B13" text-anchor="middle">M4 · 复盘与调参</text>
+<text x="730" y="430" font-size="11" fill="#993C1D" text-anchor="middle">对账 · Shapley 归因 · CI 判定</text>
+<text x="730" y="447" font-size="11" fill="#993C1D" text-anchor="middle">候选回测并行 · 修订裁决保护</text>
+<text x="730" y="464" font-size="11" fill="#993C1D" text-anchor="middle">输出：日报 · 调参建议（显式 apply）</text>
+<text x="730" y="481" font-size="11" fill="#5F5E5A" text-anchor="middle">review/</text>
+</g>
+<line x1="780" y1="386" x2="780" y2="332" stroke="#993C1D" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#a1)"/>
+<text x="796" y="362" font-size="11" fill="#993C1D">建议 apply 回写</text>
+<line x1="300" y1="430" x2="316" y2="430" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<line x1="580" y1="430" x2="596" y2="430" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<g font-size="11" text-anchor="middle">
+<rect x="40" y="530" width="185" height="56" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="132" y="552" fill="#085041">预测工作簿</text><text x="132" y="570" fill="#5F5E5A">predict_*.xlsx（16 sheets）</text>
+<rect x="243" y="530" width="185" height="56" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/><text x="335" y="552" fill="#3C3489">系数工作簿</text><text x="335" y="570" fill="#5F5E5A">coefficients_*.xlsx ＋ 决策 HTML</text>
+<rect x="446" y="530" width="185" height="56" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/><text x="538" y="552" fill="#712B13">复盘日报/月报</text><text x="538" y="570" fill="#5F5E5A">review_daily/monthly</text>
+<rect x="649" y="530" width="185" height="56" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/><text x="741" y="552" fill="#444441">调参建议</text><text x="741" y="570" fill="#5F5E5A">suggestions_*.yaml</text>
+</g>
+<line x1="170" y1="490" x2="132" y2="524" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<line x1="450" y1="490" x2="335" y2="524" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<line x1="730" y1="490" x2="538" y2="524" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<line x1="820" y1="490" x2="741" y2="524" stroke="#888780" stroke-width="1.5" marker-end="url(#a1)"/>
+<text x="40" y="618" font-size="11" fill="#5F5E5A">实线＝数据/产物流；虚线＝调参建议经人工 apply 后回写 config，影响下一轮预测（闭环，绝不自动生效）</text>
+</svg>
+<figcaption>图 1 ｜ 系统架构：数据来源 → M1 接入 → master.db 事实库 → M2/M3/M4 → 报告；虚线为调参闭环</figcaption>
+</figure>
+</section>
+
+<!-- ============ 2 一次日常运行 ============ -->
+<section>
+<h2>二、一次日常运行：从收件箱到三套报告</h2>
+<p class="lead">每天只有一个动作——把交易中心下载的文件丢进 <code>daily_inbox/</code>，双击一键入口，其余全自动。</p>
+
+<figure>
+<svg viewBox="0 0 900 262" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif" role="img">
+<title>日常运行流水线</title>
+<desc>六个步骤从收件箱到报告，含成功失败分支</desc>
+<defs>
+<marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="40" y="30" font-size="13" font-weight="500" fill="#5F5E5A">一键日常导入并生成（.bat / .command / python main.py all）</text>
+<g font-size="11" text-anchor="middle">
+<rect x="40" y="48" width="124" height="72" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text x="102" y="70" font-size="12" font-weight="500" fill="#2C2C2A">① 放文件</text>
+<text x="102" y="88" fill="#444441">五类日常文件</text>
+<text x="102" y="104" fill="#5F5E5A">→ daily_inbox/</text>
+<rect x="178" y="48" width="124" height="72" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="240" y="70" font-size="12" font-weight="500" fill="#0C447C">② 双击一键</text>
+<text x="240" y="88" fill="#185FA5">自动分发</text>
+<text x="240" y="104" fill="#5F5E5A">按文件名识别</text>
+<rect x="316" y="48" width="124" height="72" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="378" y="70" font-size="12" font-weight="500" fill="#0C447C">③ 导入·天气</text>
+<text x="378" y="88" fill="#185FA5">清洗校验入库</text>
+<text x="378" y="104" fill="#5F5E5A">SHA256 幂等</text>
+<rect x="454" y="48" width="124" height="72" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="516" y="70" font-size="12" font-weight="500" fill="#085041">④ M2 预测</text>
+<text x="516" y="88" fill="#0F6E56">明日 24 点</text>
+<text x="516" y="104" fill="#5F5E5A">负荷·价格·区间</text>
+<rect x="592" y="48" width="124" height="72" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="654" y="70" font-size="12" font-weight="500" fill="#3C3489">⑤ M3 系数</text>
+<text x="654" y="88" fill="#534AB7">研究系数·风险</text>
+<text x="654" y="104" fill="#5F5E5A">消费 M2 发布</text>
+<rect x="730" y="48" width="124" height="72" rx="8" fill="#FAECE7" stroke="#993C1D" stroke-width="0.5"/>
+<text x="792" y="70" font-size="12" font-weight="500" fill="#712B13">⑥ M4 复盘</text>
+<text x="792" y="88" fill="#993C1D">对账·归因</text>
+<text x="792" y="104" fill="#5F5E5A">调参建议</text>
+</g>
+<line x1="164" y1="84" x2="174" y2="84" stroke="#888780" stroke-width="1.5" marker-end="url(#a2)"/>
+<line x1="302" y1="84" x2="312" y2="84" stroke="#888780" stroke-width="1.5" marker-end="url(#a2)"/>
+<line x1="440" y1="84" x2="450" y2="84" stroke="#888780" stroke-width="1.5" marker-end="url(#a2)"/>
+<line x1="578" y1="84" x2="588" y2="84" stroke="#888780" stroke-width="1.5" marker-end="url(#a2)"/>
+<line x1="716" y1="84" x2="726" y2="84" stroke="#888780" stroke-width="1.5" marker-end="url(#a2)"/>
+<rect x="40" y="152" width="420" height="58" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="250" y="176" font-size="12" font-weight="500" fill="#085041" text-anchor="middle">✓ 成功：源文件归档 daily_processed/时间戳/</text>
+<text x="250" y="196" font-size="11" fill="#0F6E56" text-anchor="middle">产出三套报告；同内容文件重跑直接跳过，不重复写库</text>
+<rect x="480" y="152" width="380" height="58" rx="8" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.5"/>
+<text x="670" y="176" font-size="12" font-weight="500" fill="#633806" text-anchor="middle">⚠ 失败：文件留在 daily_inbox/</text>
+<text x="670" y="196" font-size="11" fill="#854F0B" text-anchor="middle">整批拒绝会一次性列明 sheet/行/列；修正后原样重跑</text>
+<line x1="378" y1="120" x2="250" y2="148" stroke="#0F6E56" stroke-width="1.5" marker-end="url(#a2)"/>
+<line x1="654" y1="120" x2="670" y2="148" stroke="#BA7517" stroke-width="1.5" marker-end="url(#a2)"/>
+<text x="40" y="242" font-size="11" fill="#5F5E5A">全程约 5~8 分钟（M2 约 2 分钟、M3 约 1 分钟、M4 约 3 分钟含并行候选回测）；申报按钮始终由人手动点击</text>
+</svg>
+<figcaption>图 2 ｜ 日常运行流水线：六步全自动串联，成功归档、失败可原样重跑</figcaption>
+</figure>
+
+<table>
+<tr><th>场景</th><th>操作</th><th>等价命令</th></tr>
+<tr><td>每天日常</td><td>双击 <code>一键日常导入并生成.bat</code></td><td><code>python main.py all</code></td></tr>
+<tr><td>只导入数据</td><td>双击 <code>一键导入数据.bat</code></td><td><code>python main.py ingest</code></td></tr>
+<tr><td>只刷新披露</td><td>双击 <code>一键导入披露.bat</code></td><td><code>python main.py disclosure</code></td></tr>
+<tr><td>只跑预测/系数</td><td>双击 <code>一键跑预测.bat</code></td><td><code>python main.py load</code> / <code>coefficient</code></td></tr>
+<tr><td>验证环境</td><td>—</td><td><code>python run_tests_windows.py</code>（应 116 项全绿）</td></tr>
+</table>
+</section>
+
+<!-- ============ 3 模块详解 ============ -->
+<section>
+<h2>三、四个模块分别做什么</h2>
+
+<div class="card">
+<span class="badge b-m1">M1</span><b>数据接入 —— 把原始文件变成可信事实</b>
+<table>
+<tr><th style="width:90px">输入</th><td>零售用户电量 xlsx ｜ 现货价格 xlsx ｜ 组织中心实际结果 zip ｜ 中调实际披露 zip ｜ 次日预测披露 xlsx ｜ 天气（Open-Meteo 自动抓取，21 城加权）</td></tr>
+<tr><th>关键机制</th><td><b>SHA256 幂等</b>：同内容文件重跑直接跳过；<b>整批原子</b>：要么全部入库要么全部回退；<b>口径校验</b>：负负荷隔离不截断、零价按缺失、96 点齐才聚合小时、空披露工作簿不当实际负荷</td></tr>
+<tr><th>输出</th><td>master.db 四张中文事实表（负荷/负荷预测/日前价/实时价）＋ 接入批次审计</td></tr>
+<tr><th>失败样式</th><td>整批拒绝，一次性列明所有 sheet/行/列错误——修正后把同一个文件再拖进 inbox 重跑即可</td></tr>
+</table>
+</div>
+
+<div class="card">
+<span class="badge b-m2">M2</span><b>负荷与价格预测 —— 明日 24 点的三个答案</b>
+<table>
+<tr><th style="width:90px">回答</th><td>明天每小时用多少电（负荷）？日前/实时价各多少（价格）？实时会不会比日前贵（价差方向与概率）？</td></tr>
+<tr><th>算法</th><td>基准 B（近 28 天同类型日加权平均，14 天半衰期）＋ 残差 Ridge（天气/日历/披露线索修正，缰绳防过拟合）；区间按同小时历史误差分位数（异方差化）</td></tr>
+<tr><th>选择机制</th><td><b>消融考试</b>：无天气 / 带天气 / 加披露三场同卷考试，分数高者上岗；窗口随目标日<b>滚动</b>，永远用最近 62~91 天选模型，不停留在旧季节</td></tr>
+<tr><th>防泄漏</th><td>available_time ≤ 决策截点三重校验；信息边界＝库内最新完整日（负荷 D+4 / 价格 D+5 到达）</td></tr>
+<tr><th>输出</th><td><code>predict_*.xlsx</code>（16 个 sheet）＋ 库内发布记录（M3 唯一价格负荷来源，无双轨）</td></tr>
+</table>
+</div>
+
+<div class="card">
+<span class="badge b-m3">M3</span><b>申报系数优化 —— "若逐利，该多报还是少报"</b>
+<table>
+<tr><th style="width:90px">求解</th><td>24 小时联合优化 k∈[0.8, 1.2]：90 天场景（负荷误差×价差配对，保留相关性），30 天半衰期近期加权；目标＝均值 − λ·CVaR，加权超限 ≤ 10% 机会约束，相邻小时平滑；<b>LP/MILP 精确解</b>（HiGHS，真实数据较网格搜索 +672 元/日）</td></tr>
+<tr><th>偏差计价</th><td><b>获利回收口径</b>：±20% 带外多赚的部分被回收、亏的自己扛——多报超带白干，优化器自动收敛（换口径后系数从顶 1.2 收缩到 0.98~1.13）</td></tr>
+<tr><th>稳健输出</th><td>网格解对照、系数敏感性、<b>邻域稳健度</b>（k 挪一格掉多少＝站在平地还是悬崖）、MILP 不可行时给出最小可达超限参考</td></tr>
+<tr><th>边界</th><td><b>研究模式</b>：实际申报 k=1；风控状态"不可行"＝近期波动超限额画像，如实降级不硬出解</td></tr>
+<tr><th>输出</th><td><code>coefficients_*.xlsx</code>（8 sheets）＋ <code>audit_*.json</code> ＋ <code>decision_*.html</code></td></tr>
+</table>
+</div>
+
+<div class="card">
+<span class="badge b-m4">M4</span><b>复盘与调参 —— 昨天错在哪，参数动不动</b>
+<table>
+<tr><th style="width:90px">对账</th><td>版本化对账（预测 vs 实际）；负荷主指标 WMAPE，价差方向对照<b>无条件多数基准</b>（赢它才算本事）</td></tr>
+<tr><th>归因</th><td><b>Shapley 三因素</b>（负荷误差/价格误差/系数选择）：所有进组顺序取平均，顺序无关、加总＝实际收益——谁负得多短板在谁</td></tr>
+<tr><th>调参判定</th><td>候选回测（进程池并行，分钟级）＋ <b>日块 bootstrap CI 下界 &gt; 0</b>：最保守估计仍改善才建议采纳，防运气；分任务窗口（负荷 30 天 / 价格风险 60 天）</td></tr>
+<tr><th>保护</th><td>多版本修订硬拦截待裁决；晚到值透明记录不阻塞；建议必须人工 <code>apply</code> 才回写 config</td></tr>
+<tr><th>输出</th><td><code>review_daily/monthly_*.html+xlsx</code> ＋ <code>suggestions_*.yaml</code> ＋ <code>candidate_comparison.csv</code></td></tr>
+</table>
+</div>
+</section>
+
+<!-- ============ 4 核心算法直觉 ============ -->
+<section>
+<h2>四、核心算法的直觉（三张图看懂）</h2>
+
+<h3>4.1 预测是怎么算出来的：老师傅 ＋ 徒弟，再考试选拔</h3>
+<figure>
+<svg viewBox="0 0 680 304" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif" role="img">
+<title>预测构成</title>
+<desc>基准B老师傅加残差Ridge徒弟构成预测，消融考试选拔配置</desc>
+<defs>
+<marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="40" y="32" font-size="14" font-weight="500" fill="#2C2C2A">预测 ＝ 老师傅 ＋ 徒弟，再考试选拔</text>
+<rect x="40" y="52" width="312" height="78" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="196" y="74" font-size="13" font-weight="500" fill="#085041" text-anchor="middle">基准 B ＝ 老师傅</text>
+<text x="196" y="94" font-size="11" fill="#0F6E56" text-anchor="middle">过去 28 天同类日的加权平均</text>
+<text x="196" y="110" font-size="11" fill="#0F6E56" text-anchor="middle">例：明天周三 → 近 4 周周三的用电</text>
+<text x="196" y="126" font-size="11" fill="#0F6E56" text-anchor="middle">越近的日子权重越大（14 天减半）</text>
+<text x="366" y="95" font-size="16" fill="#5F5E5A" text-anchor="middle">＋</text>
+<rect x="384" y="52" width="256" height="78" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="512" y="74" font-size="13" font-weight="500" fill="#0C447C" text-anchor="middle">残差 Ridge ＝ 徒弟</text>
+<text x="512" y="94" font-size="11" fill="#185FA5" text-anchor="middle">老师傅差多少，用线索补多少</text>
+<text x="512" y="110" font-size="11" fill="#185FA5" text-anchor="middle">线索：天气 / 调休 / 中调预测…</text>
+<text x="512" y="126" font-size="11" fill="#185FA5" text-anchor="middle">修正幅度受限 → 防把噪声当规律</text>
+<line x1="340" y1="132" x2="340" y2="148" stroke="#888780" stroke-width="1.5" marker-end="url(#a3)"/>
+<rect x="170" y="152" width="340" height="40" rx="8" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text x="340" y="172" font-size="12" font-weight="500" fill="#042C53" text-anchor="middle">＝ 明日 24 点预测（负荷 · 价格 · 区间）</text>
+<text x="340" y="186" font-size="11" fill="#0C447C" text-anchor="middle">报表里 baseline 行 ＝ 老师傅本人的成绩</text>
+<text x="40" y="232" font-size="12" font-weight="500" fill="#2C2C2A">消融候选组 ＝ 三场考试（同一张卷子＝验证窗口）</text>
+<text x="330" y="232" font-size="11" fill="#5F5E5A">→ 分数高者上岗（防无脑堆信息）</text>
+<rect x="40" y="244" width="186" height="44" rx="6" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text x="133" y="262" font-size="11" fill="#444441" text-anchor="middle">闭卷：不带天气</text>
+<text x="133" y="278" font-size="11" fill="#5F5E5A" text-anchor="middle">只靠历史与日历</text>
+<rect x="247" y="244" width="186" height="44" rx="6" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text x="340" y="262" font-size="11" fill="#444441" text-anchor="middle">开卷：带天气</text>
+<text x="340" y="278" font-size="11" fill="#5F5E5A" text-anchor="middle">热度 / 湿度 / 辐射等线索</text>
+<rect x="454" y="244" width="186" height="44" rx="6" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text x="547" y="262" font-size="11" fill="#444441" text-anchor="middle">加参考书：披露特征</text>
+<text x="547" y="278" font-size="11" fill="#5F5E5A" text-anchor="middle">中调预测曲线等</text>
+</svg>
+<figcaption>图 3 ｜ 预测的两层结构与消融考试：模型必须赢过老师傅（baseline）才有存在价值</figcaption>
+</figure>
+
+<h3>4.2 风险是怎么算的：90 张卡片、倒霉天、止损线、20% 带</h3>
+<figure>
+<svg viewBox="0 0 680 370" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif" role="img">
+<title>风险五概念</title>
+<desc>场景卡片CVaR限额超限与获利回收示意</desc>
+<text x="40" y="32" font-size="14" font-weight="500" fill="#2C2C2A">风险与回收：卡片 · CVaR · 限额 · 超限 · 20% 带</text>
+<text x="40" y="68" font-size="12" font-weight="500" fill="#2C2C2A">场景 ＝ 90 天真实剧本做成的卡片（示意 12 张）</text>
+<g>
+<rect x="40" y="78" width="42" height="30" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="61" y="97" font-size="11" fill="#085041" text-anchor="middle">+52</text>
+<rect x="90" y="78" width="42" height="30" rx="4" fill="#FAECE7" stroke="#D85A30" stroke-width="0.5"/><text x="111" y="97" font-size="11" fill="#712B13" text-anchor="middle">−18</text>
+<rect x="140" y="78" width="42" height="30" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="161" y="97" font-size="11" fill="#085041" text-anchor="middle">+7</text>
+<rect x="190" y="78" width="42" height="30" rx="4" fill="#FAECE7" stroke="#D85A30" stroke-width="0.5"/><text x="211" y="97" font-size="11" fill="#712B13" text-anchor="middle">−95</text>
+<rect x="240" y="78" width="42" height="30" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="261" y="97" font-size="11" fill="#085041" text-anchor="middle">+31</text>
+<rect x="290" y="78" width="42" height="30" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="311" y="97" font-size="11" fill="#085041" text-anchor="middle">+12</text>
+<rect x="340" y="78" width="42" height="30" rx="4" fill="#FAECE7" stroke="#D85A30" stroke-width="0.5"/><text x="361" y="97" font-size="11" fill="#712B13" text-anchor="middle">−40</text>
+<rect x="390" y="78" width="42" height="30" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="411" y="97" font-size="11" fill="#085041" text-anchor="middle">+68</text>
+<rect x="440" y="78" width="42" height="30" rx="4" fill="#FAECE7" stroke="#D85A30" stroke-width="0.5"/><text x="461" y="97" font-size="11" fill="#712B13" text-anchor="middle">−8</text>
+<rect x="490" y="78" width="42" height="30" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="511" y="97" font-size="11" fill="#085041" text-anchor="middle">+23</text>
+<rect x="540" y="78" width="42" height="30" rx="4" fill="#FAECE7" stroke="#D85A30" stroke-width="0.5"/><text x="561" y="97" font-size="11" fill="#712B13" text-anchor="middle">−62</text>
+<rect x="590" y="78" width="42" height="30" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/><text x="611" y="97" font-size="11" fill="#085041" text-anchor="middle">+44</text>
+</g>
+<text x="40" y="124" font-size="11" fill="#5F5E5A">每张卡＝一天的（负荷误差 × 价差）真实剧本；「明天」＝抽一张卡的后果（相关性保留）</text>
+<text x="40" y="158" font-size="12" font-weight="500" fill="#2C2C2A">CVaR ＝ 最倒霉 10% 天的平均亏损</text>
+<line x1="82" y1="192" x2="218" y2="192" stroke="#993C1D" stroke-width="1.5"/>
+<line x1="82" y1="186" x2="82" y2="192" stroke="#993C1D" stroke-width="1.5"/>
+<line x1="218" y1="186" x2="218" y2="192" stroke="#993C1D" stroke-width="1.5"/>
+<text x="150" y="180" font-size="11" fill="#993C1D" text-anchor="middle">最倒霉 10%</text>
+<line x1="40" y1="210" x2="640" y2="210" stroke="#888780" stroke-width="1"/>
+<g>
+<circle cx="82" cy="210" r="4.5" fill="#F0997B" stroke="#993C1D"/>
+<circle cx="190" cy="210" r="4.5" fill="#F0997B" stroke="#993C1D"/>
+<circle cx="217" cy="210" r="4.5" fill="#F0997B" stroke="#993C1D"/>
+<circle cx="225" cy="210" r="4.5" fill="#F0997B" stroke="#993C1D"/>
+<circle cx="257" cy="210" r="4.5" fill="#F0997B" stroke="#993C1D"/>
+<circle cx="290" cy="210" r="4.5" fill="#F0997B" stroke="#993C1D"/>
+<circle cx="312" cy="210" r="4.5" fill="#F0997B" stroke="#993C1D"/>
+<circle cx="340" cy="210" r="4.5" fill="#5DCAA5" stroke="#0F6E56"/>
+<circle cx="357" cy="210" r="4.5" fill="#5DCAA5" stroke="#0F6E56"/>
+<circle cx="387" cy="210" r="4.5" fill="#5DCAA5" stroke="#0F6E56"/>
+<circle cx="407" cy="210" r="4.5" fill="#5DCAA5" stroke="#0F6E56"/>
+<circle cx="430" cy="210" r="4.5" fill="#5DCAA5" stroke="#0F6E56"/>
+</g>
+<line x1="220" y1="186" x2="220" y2="234" stroke="#993C1D" stroke-width="1.5" stroke-dasharray="5,3"/>
+<text x="220" y="250" font-size="11" fill="#993C1D" text-anchor="middle">限额线</text>
+<text x="40" y="230" font-size="11" fill="#5F5E5A">亏</text>
+<text x="320" y="230" font-size="11" fill="#5F5E5A" text-anchor="middle">0</text>
+<text x="640" y="230" font-size="11" fill="#5F5E5A" text-anchor="end">赚</text>
+<text x="40" y="252" font-size="11" fill="#5F5E5A">虚线＝日损失限额；亏超限额的天数占比（近期加权）＝加权超限，须 ≤ 10% 才可行</text>
+<text x="40" y="268" font-size="11" fill="#5F5E5A">限额 auto ＝ max(2×|k=1 日均收益|, k=1 的 CVaR)——「平时赚的两倍」vs「倒霉日亏损」取大者</text>
+<text x="40" y="296" font-size="12" font-weight="500" fill="#2C2C2A">获利回收 ＝ ±20% 带外多赚的部分会被收回</text>
+<rect x="40" y="308" width="132" height="26" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text x="106" y="325" font-size="11" fill="#444441" text-anchor="middle">多报超带</text>
+<rect x="180" y="308" width="320" height="26" rx="4" fill="#EAF3DE" stroke="#3B6D11" stroke-width="0.5"/>
+<text x="340" y="325" font-size="11" fill="#27500A" text-anchor="middle">安全带：实际负荷 ±20% 之内</text>
+<rect x="508" y="308" width="132" height="26" rx="4" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+<text x="574" y="325" font-size="11" fill="#444441" text-anchor="middle">少报超带</text>
+<text x="40" y="352" font-size="11" fill="#5F5E5A">带外的偏差：多赚的被回收、亏的自己扛 → 「多报 30%」里超带的 10% 白干还担风险</text>
+</svg>
+<figcaption>图 4 ｜ 风险五概念一图流：场景（卡片）、CVaR（倒霉天）、加权超限（≤10%）、限额（止损线）、获利回收（±20% 带）</figcaption>
+</figure>
+
+<h3>4.3 整个系统是一条链加一个闭环</h3>
+<figure>
+<svg viewBox="0 0 680 235" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif" role="img">
+<title>闭环逻辑链</title>
+<desc>数据到预测优化申报复盘调参的闭环</desc>
+<defs>
+<marker id="a4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="40" y="32" font-size="14" font-weight="500" fill="#2C2C2A">数字从哪来：一条链 ＋ 一个闭环</text>
+<g>
+<rect x="40" y="48" width="108" height="88" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="94" y="68" font-size="12" font-weight="500" fill="#3C3489" text-anchor="middle">1 数据</text>
+<text x="94" y="86" font-size="11" fill="#534AB7" text-anchor="middle">库内已知数据</text>
+<text x="94" y="102" font-size="11" fill="#534AB7" text-anchor="middle">截止 D−6 天</text>
+<text x="94" y="118" font-size="11" fill="#534AB7" text-anchor="middle">负荷/价格/披露</text>
+</g>
+<line x1="148" y1="92" x2="160" y2="92" stroke="#888780" stroke-width="1.5" marker-end="url(#a4)"/>
+<g>
+<rect x="162" y="48" width="108" height="88" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="216" y="68" font-size="12" font-weight="500" fill="#3C3489" text-anchor="middle">2 M2 预测</text>
+<text x="216" y="86" font-size="11" fill="#534AB7" text-anchor="middle">同日型基准 B</text>
+<text x="216" y="102" font-size="11" fill="#534AB7" text-anchor="middle">＋ 残差 Ridge</text>
+<text x="216" y="118" font-size="11" fill="#534AB7" text-anchor="middle">→ 24 点预测·区间</text>
+</g>
+<line x1="270" y1="92" x2="282" y2="92" stroke="#888780" stroke-width="1.5" marker-end="url(#a4)"/>
+<g>
+<rect x="284" y="48" width="108" height="88" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="338" y="68" font-size="12" font-weight="500" fill="#3C3489" text-anchor="middle">3 M3 优化</text>
+<text x="338" y="86" font-size="11" fill="#534AB7" text-anchor="middle">90 天场景加权</text>
+<text x="338" y="102" font-size="11" fill="#534AB7" text-anchor="middle">均值−λ·CVaR</text>
+<text x="338" y="118" font-size="11" fill="#534AB7" text-anchor="middle">＋超限约束→k</text>
+</g>
+<line x1="392" y1="92" x2="404" y2="92" stroke="#888780" stroke-width="1.5" marker-end="url(#a4)"/>
+<g>
+<rect x="406" y="48" width="108" height="88" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="460" y="68" font-size="12" font-weight="500" fill="#3C3489" text-anchor="middle">4 申报</text>
+<text x="460" y="86" font-size="11" fill="#534AB7" text-anchor="middle">研究模式 k=1</text>
+<text x="460" y="102" font-size="11" fill="#534AB7" text-anchor="middle">申报=预测负荷</text>
+<text x="460" y="118" font-size="11" fill="#534AB7" text-anchor="middle">研究系数供复核</text>
+</g>
+<line x1="514" y1="92" x2="526" y2="92" stroke="#888780" stroke-width="1.5" marker-end="url(#a4)"/>
+<g>
+<rect x="528" y="48" width="108" height="88" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="582" y="68" font-size="12" font-weight="500" fill="#3C3489" text-anchor="middle">5 M4 复盘</text>
+<text x="582" y="86" font-size="11" fill="#534AB7" text-anchor="middle">D+5 对账</text>
+<text x="582" y="102" font-size="11" fill="#534AB7" text-anchor="middle">Shapley 归因</text>
+<text x="582" y="118" font-size="11" fill="#534AB7" text-anchor="middle">CI 判定→建议</text>
+</g>
+<path d="M582,136 L582,168 L216,168 L216,140" fill="none" stroke="#993556" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#a4)"/>
+<text x="399" y="192" font-size="11" fill="#993556" text-anchor="middle">调参建议经你显式 apply 后回写 config，改变下一轮预测（闭环）——不自动生效</text>
+<text x="399" y="212" font-size="11" fill="#5F5E5A" text-anchor="middle">文件名规则：predict/audit=运行日；coefficients=目标日（内容是"明日"）；review=复盘日</text>
+</svg>
+<figcaption>图 5 ｜ 全链路：预测喂给优化，系数被对账检验，检验产出建议，建议改参数——每一环的口径都留了审计</figcaption>
+</figure>
+
+<div class="note">
+<b>四问速记（15 个概念的全部直觉）：</b>
+①预测怎么来——基准 B（老师傅）、残差 Ridge（徒弟）、消融候选组（考试选拔）；②准不准——WMAPE（总误差率）、多数基准（及格线）、P10~P90（诚实区间）；③亏多少——场景（90 张卡片）、CVaR（倒霉天）、加权超限（≤10% 预算）、日损失限额（止损线）、获利回收（±20% 带外白干）；④信不信——邻域稳健度（平地/悬崖）、Shapley（顺序无关分锅）、CI 下界&gt;0（最保守仍赚钱）、gate（没赢过 k=1 不上岗的保险丝）。
+</div>
+</section>
+
+<!-- ============ 5 日常操作 ============ -->
+<section>
+<h2>五、日常操作与文件名规则</h2>
+<h3>5.1 十分钟速读路径（每天跑完后按此顺序看报告）</h3>
+<table>
+<tr><th style="width:50px">步</th><th style="width:330px">文件</th><th>只看什么</th><th style="width:210px">30 秒判断</th></tr>
+<tr><td>1</td><td><code>review_daily_昨日.html</code></td><td>WMAPE、价差方向准确率 vs 多数基准、Shapley 最大负贡献</td><td>昨天误差大不大、出在负荷还是价格</td></tr>
+<tr><td>2</td><td><code>predict_运行日_*.xlsx</code>（取最新）</td><td>「明日24点总览」：晚间 17-23 时价差、P10~P90 宽度</td><td>明天有没有价差机会、不确定性多大</td></tr>
+<tr><td>3</td><td><code>coefficients_明日_时间.xlsx</code>（取最新）</td><td>「24小时系数」：研究系数方向、末行风控状态</td><td>系数建议偏多还是偏少、可不可行</td></tr>
+<tr><td>4</td><td><code>suggestions_今日.yaml</code></td><td>status、blocked_reason、CI 结论</td><td>参数有没有被建议调整</td></tr>
+</table>
+
+<h3>5.2 文件名规则（别拿错文件）</h3>
+<table>
+<tr><th>模式</th><th>例子</th><th>日期含义</th></tr>
+<tr><td><code>predict_运行日_时间_哈希.xlsx</code></td><td>predict_20261014_165414</td><td>10-14 运行，内容是 10-15 的预测</td></tr>
+<tr><td><code>coefficients_目标日_时间.xlsx</code></td><td>coefficients_20261015_172610</td><td>文件名是目标日（明日）</td></tr>
+<tr><td><code>review_daily_复盘日</code> / <code>review_monthly_年-月</code></td><td>review_daily_20261014</td><td>复盘的是那一天/那一月</td></tr>
+</table>
+<p class="kv">同名多次运行会留多份（时间戳区分）——<b>永远取时间戳最新</b>；旧的是口径变更前的历史。更细的逐 sheet 读法见《报告阅读指南.md》。</p>
+</section>
+
+<!-- ============ 6 数据治理 ============ -->
+<section>
+<h2>六、数据治理与诚实边界（这套系统的性格）</h2>
+<table>
+<tr><th style="width:150px">原则</th><th>做法</th></tr>
+<tr><td><b>研究模式</b></td><td>实际申报系数恒为 1；research_k ≠ adopted_k 分离；调参建议必须人工 apply 才生效——任何输出都不会自动变成真金白银的动作</td></tr>
+<tr><td><b>单一事实源</b></td><td>全部数据进出 master.db；版本化表＋current_ 视图；payload 保留原始文件字节（可回溯任意批次）</td></tr>
+<tr><td><b>幂等与原子</b></td><td>同 SHA256 文件重跑跳过；整批事务要么全进要么全退</td></tr>
+<tr><td><b>防泄漏</b></td><td>训练/校准/策略全链同一截点；available_time ≤ 决策截点三重校验；信息边界＝库内最新完整日（D−6）</td></tr>
+<tr><td><b>修订保护</b></td><td>多版本修订硬拦截，裁决（晚到版为准）后才放行；其余晚到值透明记录（late_arrival_notice），不阻塞</td></tr>
+<tr><td><b>诚实标记</b></td><td>空披露不当实际负荷；备用/约束保留原文不妄称"已触发"；未认证的发布时点全部显式标注；指标跨口径不可混比清单见《迭代说明_v1.2.md》</td></tr>
+</table>
+
+<div class="note"><b>当前已知边界：</b>披露发布时点未认证（只能覆盖/误差研究，不能严格事前回测）；available_at＝入库时刻（边际误差 ≤1 天）；回测为最终快照回放（3 组晚到值已透明记录）；表计 T+1 数据源接入后观测滞后可从 6 天回到 3~4 天——这是当前最有价值的数据升级项。</div>
+</section>
+
+<!-- ============ 7 版本演进 ============ -->
+<section>
+<h2>七、版本演进</h2>
+<div class="tl">
+<div class="tl-item"><b>v1.0 原始清洗版</b><small>2026-09-15<br>四模块雏形＋master.db 版本化数据库；原始文件自动清洗，一键导入入口</small></div>
+<div class="tl-item"><b>自动天气入库版</b><small>2026-09-17<br>Open-Meteo 21 城加权天气接入一键入口；客户城市映射</small></div>
+<div class="tl-item"><b>v1.1 披露迭代版</b><small>2026-10-14<br>披露 ZIP 版本化接入（disclosure_ingest）；M2 价格消融；M3 消费 M2 发布；M4 披露复盘</small></div>
+<div class="tl-item now"><b>v1.2 算法优化版</b><small>2026-10-14（当前）<br>偏差考核获利回收口径；M3 LP/MILP 精确解；M2 窗口滚动化；M4 Shapley＋CI＋并行；信息边界重构（17→6 天）；116 项测试双栈全绿</small></div>
+</div>
+<p class="kv">详细变更：《迭代说明_v1.2.md》（配置变化表＋口径不可混比清单）；迁移：《迁移指南_v1.2.md》（v1.2 交付包 293 MB，微信可传）。</p>
+</section>
+
+<!-- ============ 8 技术信息 ============ -->
+<section>
+<h2>八、技术信息</h2>
+<div class="grid2">
+<div>
+<table>
+<tr><th colspan="2">环境与验证</th></tr>
+<tr><td style="width:110px">Python</td><td>3.9（锁定依赖）与 3.13（最新依赖）双栈验证，各 116 项测试全绿</td></tr>
+<tr><td>依赖</td><td><code>requirements.txt</code>（pandas/numpy/scikit-learn/scipy/PyYAML/joblib/openpyxl/requests/chinese-calendar）</td></tr>
+<tr><td>测试</td><td><code>python run_tests_windows.py</code>，5 套 116 项</td></tr>
+<tr><td>入口</td><td><code>main.py all|ingest|disclosure|load|coefficient|review</code>；双击 .bat/.command</td></tr>
+</table>
+</div>
+<div>
+<table>
+<tr><th colspan="2">数据与交付</th></tr>
+<tr><td style="width:110px">数据库</td><td>master.db 2.3 GB（压缩比 8.5:1）</td></tr>
+<tr><td>覆盖</td><td>组合/客户负荷 2026-04 起；价格 2025-01 起；16 客户＋全省统调；天气 21 城</td></tr>
+<tr><td>交付包</td><td>v1.2 zip 293 MB / 548 文件 / 全文件 SHA256 清单</td></tr>
+<tr><td>文档族</td><td>README / 迭代说明 v1.1·v1.2 / 迁移指南 / 报告阅读指南 / 六份算法优化阶段文档 / 验收文档 ×4</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<footer>四模块电力交易系统 v1.2 · 说明文档 · 2026-10-20 · 配套阅读：《报告阅读指南》《迭代说明_v1.2》《迁移指南_v1.2》</footer>
+</div>
+</body>
+</html>
