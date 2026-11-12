@@ -1,0 +1,7 @@
+[data_ingest] ran=49 failures=0 errors=0 skipped=0
+[database] ran=29 failures=0 errors=0 skipped=0
+[load_forecast] ran=34 failures=0 errors=0 skipped=0
+[coefficient] ran=18 failures=0 errors=0 skipped=1
+[review] ran=30 failures=0 errors=0 skipped=0
+[disclosure] ran=2 failures=0 errors=0 skipped=2
+Total: 162 tests; 159 passed; 3 skipped; 0 failures/errors.

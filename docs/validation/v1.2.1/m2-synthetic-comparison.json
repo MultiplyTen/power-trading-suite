@@ -1,0 +1,33 @@
+{
+  "scope": "synthetic_only",
+  "seed": 42,
+  "notice": "Synthetic weekly/weather signal, not evidence of real business accuracy or returns. Data generation was fixed before comparison; no tuning to select a favorable result.",
+  "test_window": [
+    "2026-07-01",
+    "2026-07-31"
+  ],
+  "observation_lag_days": 6,
+  "ridge_alpha": 1000,
+  "results": {
+    "basic": {
+      "feature_count": 34,
+      "fit_origins": 31,
+      "n": 744,
+      "mae": 3.92715477886019,
+      "rmse": 4.937759548147191,
+      "wmape": 0.039266862843066304,
+      "total_bias": 853.7365914708046,
+      "relative_bias": 0.011473585268264143
+    },
+    "enhanced": {
+      "feature_count": 60,
+      "fit_origins": 31,
+      "n": 744,
+      "mae": 3.678251257206666,
+      "rmse": 4.645431846093886,
+      "wmape": 0.03677812455891806,
+      "total_bias": 763.0391671207722,
+      "relative_bias": 0.010254679293882442
+    }
+  }
+}

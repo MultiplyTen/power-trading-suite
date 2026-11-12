@@ -20,12 +20,12 @@ def write_html(path,coeff,daily,metrics,errors,meta,sensitivity):
     metrics=metrics.copy();metrics['方向准确率']=metrics['方向准确率'].map(lambda v:f'{v:.2%}');sensitivity=sensitivity.rename(columns={'mean':'日均收益_元','cvar':'CVaR_元','exceed_probability':'超限概率','objective':'风险调整目标值','feasible':'满足概率约束'})
     body='<h1>日前／实时申报系数决策</h1><p class="notice">研究示例：系数为历史数据搜索所得解，不保证未来收益。数据发布时间、价格口径与负荷单位未完成认证；实际采用系数保持 1。</p>'
     body+='<p><strong>目标日：'+meta['目标日']+'；当前搜索'+('找到场景可行解' if meta['最终场景风险']['feasible'] else '未找到满足风控约束的解，不可申报')+'</strong></p>'
-    body+='<p>前段选择、后段冻结验证。真实盈亏按实际价格结算；优化场景额外扣除持仓方向不利的误差成本。CVaR 为整日损失的经验尾部均值，图中损失单位为元（取决于 MWh 单位确认）。</p>'
+    body+='<p>旧90天回放单列为proxy研究对照，不能称当前M2模型的真实校准或实盘收益。最终场景优先使用同版本原始事前M2完整发布误差，样本不足时明确降级为proxy。CVaR仍为整日损益的经验尾部损失，不改变资金预算或采用系数。</p>'
     body+=line(coeff['研究系数'], '24 小时研究系数（橙点为边界或平滑触达，点1对应00:00）',marks=(coeff['边界触达']|coeff['平滑触达']).to_numpy())
     body+=coeff.to_html(index=False,border=0,na_rep='—',float_format=lambda v:f'{v:,.3f}')
-    body+=line(daily['累计收益'],'独立验证期累计收益／元')+line(daily['回撤'],'独立验证期回撤／元','#c26a38')
-    body+=histogram(-daily['实际收益'],'独立验证期单日亏损分布／元')
+    body+=line(daily['累计收益'],'proxy研究对照验证期累计收益／元')+line(daily['回撤'],'proxy研究对照验证期回撤／元','#c26a38')
+    body+=histogram(-daily['实际收益'],'proxy研究对照验证期单日亏损分布／元')
     for col in ['da_error','rt_error','spread_error']:body+=histogram(errors[col],col+' 历史误差分布／元每MWh')
-    body+='<h2>独立验证期价格准确率</h2>'+metrics.to_html(index=False,border=0,na_rep='—',float_format=lambda v:f'{v:,.3f}')+'<h2>系数敏感性：固定五档，验证期实际价格</h2>'+sensitivity.to_html(index=False,border=0,na_rep='—',float_format=lambda v:f'{v:,.3f}')
+    body+='<h2>proxy研究对照的价格误差与方向指标</h2>'+metrics.to_html(index=False,border=0,na_rep='—',float_format=lambda v:f'{v:,.3f}')+'<h2>proxy研究对照系数敏感性：固定五档，验证期历史价格</h2>'+sensitivity.to_html(index=False,border=0,na_rep='—',float_format=lambda v:f'{v:,.3f}')
     body+='<h2>模型、参数、来源与风控</h2><pre>'+html.escape(json.dumps(meta,ensure_ascii=False,indent=2,default=str))+'</pre>'
     path.write_text('<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>申报系数优化报告</title><style>body{font:15px system-ui;color:#163745;background:#f4f7f8;max-width:1440px;margin:40px auto;padding:0 24px}h1{font-size:34px}section{background:white;padding:16px;border-radius:12px;margin:24px 0}svg{width:100%;max-height:260px}table{display:block;overflow:auto;border-collapse:collapse;background:white;font-size:13px}th,td{padding:10px;border-bottom:1px solid #dce5e9;white-space:nowrap;text-align:right}th{background:#163745;color:white}.notice{padding:18px;background:#fff0dc;border-left:5px solid #bf7b24}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:white;padding:20px}</style>'+body+'</html>',encoding='utf-8')

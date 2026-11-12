@@ -248,7 +248,7 @@ def input_fingerprint(path=DB):
     """Changes to shared calendar/data invalidate every cached tuning candidate."""
     with connect(path) as db:
         versions=db.execute('SELECT f.path,v.sha256 FROM input_files f JOIN input_versions v ON f.active_version=v.id ORDER BY f.path').fetchall()
-    shared_code=[sha(p.read_bytes()) for p in [Path(__file__),Path(__file__).with_name('runtime.py'),Path(__file__).with_name('trading.py')] if p.exists()]
+    shared_code=[sha(p.read_bytes()) for p in [Path(__file__),Path(__file__).with_name('runtime.py'),Path(__file__).with_name('trading.py'),Path(__file__).with_name('forecast_errors.py')] if p.exists()]
     return sha(json.dumps([versions,shared_code],ensure_ascii=False).encode('utf-8'))
 
 def check(db):

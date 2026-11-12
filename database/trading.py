@@ -100,20 +100,22 @@ def forecast_load(day,path=DB,manual_only=False):
     cutoff=day-pd.Timedelta(days=1)+pd.Timedelta(hours=9)
     return s,{'source':'统一库手填负荷预测兜底','latest_receipt':str(f.updated_at.max()),'late_for_D1_cutoff':bool((pd.to_datetime(f.available_at,format='mixed')>cutoff).any())}
 
-def published_load_forecast(day,path=DB):
-    """Read one complete M2 load/DA/RT publication for the target day."""
-    day=pd.Timestamp(day).normalize();idx=pd.date_range(day,periods=24,freq='h')
-    with open_db(path) as db:
-        ids=db.execute("SELECT DISTINCT r.id,r.published_at,r.model_version FROM runs r JOIN predictions p ON r.id=p.run_id WHERE r.kind='load' AND r.status NOT LIKE '%replay%' AND p.target>=? AND p.target<=? ORDER BY r.published_at DESC",(str(idx[0]),str(idx[-1]))).fetchall()
-        for rid,published,model_version in ids:
-            f=pd.read_sql_query('SELECT target,load,da,rt FROM predictions WHERE run_id=? AND target>=? AND target<=? ORDER BY target',db,params=[rid,str(idx[0]),str(idx[-1])])
-            if len(f)!=24:continue
-            f['target']=pd.to_datetime(f['target'])
-            out=f.set_index('target').reindex(idx)
-            required=['load','da','rt']
-            if out[required].isna().any().any() or not np.isfinite(out[required]).all().all() or not out['load'].ge(0).all():continue
-            return out[required],{'source':'M2统一发布记录','run_id':rid,'published_at':published,'model_version':model_version}
-    return None,{'source':'M2统一发布记录','status':'no_complete_publication'}
+def published_load_forecast(day,path=DB,decision_cutoff_hour=12,
+                            decision_cutoff_minute=30,asof=None):
+    """Read one original complete M2 day published before its D-1 cutoff."""
+    from database.forecast_errors import complete_m2_publications,local_time
+    day=local_time(day).normalize()
+    cutoff=day-pd.Timedelta(days=1)+pd.Timedelta(hours=decision_cutoff_hour,minutes=decision_cutoff_minute)
+    frame,audit=complete_m2_publications(path,day,day,cutoff if asof is None else asof,
+        decision_cutoff_hour,decision_cutoff_minute)
+    if frame.empty:
+        return None,{'source':'M2统一事前发布记录','status':'no_complete_publication','publication_audit':audit}
+    row=frame.iloc[0]
+    result=frame[['load_hat','da_hat','rt_hat']].rename(columns=lambda x:x.removesuffix('_hat'))
+    return result,{'source':'M2统一事前发布记录','run_id':row.run_id,
+        'published_at':str(row.published_at),'model_version':row.model_version,
+        'forecast_cutoff':str(row.forecast_cutoff),'publication_sha':row.sha,
+        'publication_audit':audit}
 
 def sync_actuals(db):
     """直接读取事实表，保留每次修订的真实接收时间，不读取Excel。"""

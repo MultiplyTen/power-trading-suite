@@ -1,0 +1,141 @@
+{
+  "scope": "changed_python_source_only",
+  "files": [
+    {
+      "path": "coefficient_opt/main.py",
+      "sha256": "57eca5851fb71aac8e93d59ce339d0d936244face3ca8366a6798b6755a0bf13"
+    },
+    {
+      "path": "coefficient_opt/report.py",
+      "sha256": "9170acf3f70edf608beaf86d24b6d501462fc2406a2a4eb6578554c35f1b6e5b"
+    },
+    {
+      "path": "database/forecast_errors.py",
+      "sha256": "eb5bab4a2ab4cd0df74f71b032737776d06c34c6c77869af800f98256b1f203d"
+    },
+    {
+      "path": "database/store.py",
+      "sha256": "e48057c1bbd4fdb7e7641db68efe10b4c7736ee22ffa3345493679ed3576ed71"
+    },
+    {
+      "path": "database/test_forecast_errors.py",
+      "sha256": "1e8d155bc0db9f3188c9fff684626576128eef598feb1c567caf249ada5b1266"
+    },
+    {
+      "path": "database/trading.py",
+      "sha256": "e12e40449c7aa9f3d5992d8819411f7226741277c05a38338318394a66db6302"
+    },
+    {
+      "path": "disclosure_ingest/tests/test_parser.py",
+      "sha256": "07e7a0c4f0f20f152f2f97e0027a63541ccaf4effc37ee0bd6366b109035e07d"
+    },
+    {
+      "path": "examples/m2_calendar_comparison.py",
+      "sha256": "d06887fcbb5f401b1442f28984b100ebd551e24892bb8e133555186964bf613c"
+    },
+    {
+      "path": "load_forecast/configuration.py",
+      "sha256": "fb03f0075e03aed674ee97113ae59cf5e126db1d0186c0fcba9d6048fb5a557a"
+    },
+    {
+      "path": "load_forecast/evaluation/disclosure.py",
+      "sha256": "dcdf99dcd9ab8d80142deb34dd2394a1f6f007ecc0739151b0cb63be40e34fb7"
+    },
+    {
+      "path": "load_forecast/evaluation/rolling_backtest.py",
+      "sha256": "d645c92abd7fb664243197392a3f98d1da052759beb8fdf0a575cd58be0cba87"
+    },
+    {
+      "path": "load_forecast/features/calendar.py",
+      "sha256": "653c405683402baa3209245ff18983986640844c45baf7f5947267182d8c0434"
+    },
+    {
+      "path": "load_forecast/features/load.py",
+      "sha256": "c94eb349f22b195deeb20c10620a64dd89c309e85566a6a86b4c6a783d11b663"
+    },
+    {
+      "path": "load_forecast/inputs/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "load_forecast/inputs/excel_reader.py",
+      "sha256": "757f45502e0fc087b210bd4522a5b53129a06b5b4fc7b50657f07ea8f239f1fc"
+    },
+    {
+      "path": "load_forecast/inputs/quality.py",
+      "sha256": "31a523359e323982cf90afeb2043cfb199e7bbfae854b307b5da33bf2fdd43c5"
+    },
+    {
+      "path": "load_forecast/tests/test_calendar_features.py",
+      "sha256": "9d2317ac4035cac04e75a549353577459b515a6595f003fd8875a8c52ed88356"
+    },
+    {
+      "path": "load_forecast/tests/test_release_v121.py",
+      "sha256": "849d28542b2907ebb5ab2678ec2f7293a6ab8d5416dbe75f13ec7bb78c80d895"
+    },
+    {
+      "path": "review/apply_config.py",
+      "sha256": "8a38d6349cc7a82051c590b0dee8bc43bae5ecf815df2b7a52794d0c58cc8e0c"
+    },
+    {
+      "path": "review/candidate_checks.py",
+      "sha256": "469ab5b8428a3684231ad68be9a3a28f6ac2641b1004cdc75e631791f7a01a66"
+    },
+    {
+      "path": "review/load_risk.py",
+      "sha256": "b0a7337fa97811fa1965f489f53acea9a1be4583ecae761569c91720af03e242"
+    },
+    {
+      "path": "review/main.py",
+      "sha256": "04e9aa70323d32351677cfd60192d4e70fda64cf33644cab56542d6bd37abba3"
+    },
+    {
+      "path": "review/reconciliation.py",
+      "sha256": "57d6134c594b46a0418042b1d5e8df17312b44815028c2d9f9cadbaacf0476e6"
+    },
+    {
+      "path": "review/reference_risk.py",
+      "sha256": "47c65f90021412d89e8143cd8b2ee868225c066a7ad017c08ca7ca066357c596"
+    },
+    {
+      "path": "review/reporting.py",
+      "sha256": "b807d9af58ae74477b51da2958db0ab6dc7c91b6dcbea995279d3c4eca97bc8e"
+    },
+    {
+      "path": "review/suggestions.py",
+      "sha256": "74de7d2963f3056eec630841588511dd0458d96d045e758ef16aa15e002f2aa6"
+    },
+    {
+      "path": "review/tests/smoke_load_risk.py",
+      "sha256": "0ca27b658daf732cc23d5849295efcc4e045b6154ed457ec4caef0a411b56d83"
+    },
+    {
+      "path": "review/tests/test_candidate_checks.py",
+      "sha256": "4e5003ba4e216f3b2e3eae936a4d34c2f308b232bb11ab31757752b2a9c8ee2d"
+    },
+    {
+      "path": "review/tests/test_load_risk.py",
+      "sha256": "e7cfb94dd221f168fbeee74f7a25c0847124d7fd128cc722588666d8e59a7b5d"
+    },
+    {
+      "path": "review/tests/test_reference_worker.py",
+      "sha256": "acf9a2c34a3521478046ca6cab3d7b22018d2d6549aa15f36f371d433cfc86ba"
+    },
+    {
+      "path": "review/tests/test_release_cutoff.py",
+      "sha256": "adfe700eba8135c7fccfee3a6fed3f4423b4d3e34d4b17a06e7a7edd6702c0dd"
+    },
+    {
+      "path": "review/tests/test_review.py",
+      "sha256": "ffd35558b87ec1a3576c37adf09fbe7134b2014b5206529041aec3f32adb3426"
+    },
+    {
+      "path": "review/tuning_worker.py",
+      "sha256": "eee5ec32ff92ca6ef8e0a180be600f5de8f47b75079eb4c31e262c0c711a0089"
+    },
+    {
+      "path": "run_tests_windows.py",
+      "sha256": "3324579344415c0cc0da28b2b95719b8e432b2c0c10237888f8c546eb013894c"
+    }
+  ]
+}

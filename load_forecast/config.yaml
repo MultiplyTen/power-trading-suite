@@ -77,7 +77,7 @@ price_direction:
   display_neutral_band: 20
   reference: lag2_same_hour
 project:
-  model_version: load-suite-v1.1-disclosure
+  model_version: load-suite-v1.2.1-calendar
   cache_dir: ./cache
   model_dir: ./saved_models
   output_dir: ./output
@@ -144,10 +144,12 @@ training:
   scale_window_hours: 672
   window_days: 120
   selection_mode: fixed
+  # enhanced增加星期、星期内小时形状、法定假期位置及节后1~3日公开日历特征。
+  # 继续使用Ridge；尚未实测精度提升。basic保留旧特征作为同窗对照，不代表企业生产计划。
+  calendar_features: enhanced
   # 日型粒度：six=六类（周一/周二至四/周五/周末休/节假日休/调休上班，不足软借大类）。
-  # 2026-10-14实证（同滚动窗口对比）：当前45天客户数据下six过拟合——选择窗口微优但
-  # 测试窗口全面更差（portfolio 0.173 vs 0.137，system_load 0.097 vs 0.061，da/rt MAE亦劣）。
-  # 默认binary；待负荷历史>6个月后可重估six。
+  # 2026-10-14旧six实证退化，但旧软借分母未同步乘soft，不能把退化全部归因过拟合。
+  # v1.2.1修正软借常数保持；默认仍binary，需同窗重评six，未宣称精度提升。
   day_type_granularity: binary
   day_type_soft_weight: 0.5
   day_type_min_weight: 0.3

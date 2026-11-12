@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from pathlib import Path
 import yaml
 from common import resolve,digest,stamp,dump,get_path,set_path
+from candidate_checks import passes_improvement,risk_evidence_passed,RISK_PARAMETERS
 
 @contextmanager
 def locked(root):
@@ -28,6 +29,7 @@ def log(root,action,tx,items):
 def validate_value(param,value):
  if param in ['model_name'] and value not in ['ridge','extra_trees']:raise ValueError('模型插件不在允许注册表')
  if param=='models.portfolio.name' and value not in ['baseline_ridge','residual_zero']:raise ValueError('负荷模型插件不在允许注册表')
+ if param=='training.calendar_features' and value not in ['basic','enhanced']:raise ValueError('日历特征仅允许basic/enhanced')
  if param.endswith('use_weather') or param=='use_load_feature':
   if not isinstance(value,bool):raise ValueError('特征开关必须为布尔值')
  if param in ['confidence'] and not 0<float(value)<1:raise ValueError('置信度须在0—1')
@@ -54,7 +56,14 @@ def apply(c):
   for item in items:
    project,param=item['project'],item['parameter']
    if project not in c['candidate_grid'] or param not in c['candidate_grid'][project]:raise ValueError('不允许回写此参数：'+param)
-   if not item.get('validated') or item['improvement']<c['improve_threshold']:raise ValueError('建议未通过改善阈值')
+   if (not item.get('validated')
+       or not passes_improvement(item.get('selection_improvement'),item.get('selection_ci95'),c['improve_threshold'])
+       or not passes_improvement(item.get('improvement'),item.get('holdout_ci95'),c['improve_threshold'])):
+    raise ValueError('建议未同时通过选择/验证改善阈值与CI门槛；旧证据需重新复盘')
+   if item.get('task')=='risk' or param in RISK_PARAMETERS:
+    minimum=c.get('risk_candidate_validation',{}).get('min_complete_days',10)
+    if not all(risk_evidence_passed(item.get(name),minimum) for name in ['risk_selection_validation','risk_holdout_validation']):
+     raise ValueError('风险建议缺少同限额尾损、超限比例及场景可行率不恶化的完整证据')
    if item.get('evidence_scope')=='research':
     if not configs['coefficient'].get('research_mode') or configs['load_forecast']['run'].get('strict_availability'):raise ValueError('研究建议仅可作用于研究模式，不能回写生产配置')
    if get_path(configs[project],param)!=item['old_value']:raise ValueError('旧参数值不匹配：'+param)

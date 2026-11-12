@@ -51,3 +51,8 @@ use_system_load_feature: false
 system_load_lag_days: 2
 use_disclosure_features: true
 consume_m2_publication: true
+model_version: coefficient-suite-v1.2.1-original-errors
+# 优先使用与目标M2模型版本相同的原始事前完整发布误差；不足时明确降级为proxy研究对照。
+# require_m2_publications：同版本可用完整联合误差不足时停止；proxy_only：仅作原90天研究对照。
+historical_error_source: prefer_m2_publications
+minimum_m2_error_days: 30

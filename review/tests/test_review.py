@@ -18,7 +18,7 @@ class ReviewTests(unittest.TestCase):
   root=Path(tmp);(root/'load').mkdir();(root/'coef').mkdir();(root/'output').mkdir()
   (root/'load/config.yaml').write_text(yaml.safe_dump({'run':{'strict_availability':False}}));(root/'coef/config.yaml').write_text(yaml.safe_dump({'research_mode':True,'ridge_alpha':100}))
   c={'_root':tmp,'project_paths':{'load_forecast':'load','coefficient':'coef'},'output_dir':'output','candidate_grid':{'coefficient':{'ridge_alpha':[10,100]}},'improve_threshold':.05}
-  item={'project':'coefficient','parameter':'ridge_alpha','old_value':100,'new_value':10,'validated':True,'improvement':.1,'evidence_scope':'research','reason':'隔离测试'}
+  item={'project':'coefficient','parameter':'ridge_alpha','old_value':100,'new_value':10,'validated':True,'improvement':.1,'selection_improvement':.1,'selection_ci95':[.01,.2],'holdout_ci95':[.01,.2],'evidence_scope':'research','reason':'隔离测试'}
   doc={'suggestions':[item],'config_hashes':{k:digest(root/v/'config.yaml') for k,v in c['project_paths'].items()}}
   (root/'output/suggestions_20260915.yaml').write_text(yaml.safe_dump(doc));dump(root/'output/suggestions_20260915.validated.json',doc);return root,c,doc
  def test_apply_backup_rollback(self):
@@ -38,6 +38,19 @@ class ReviewTests(unittest.TestCase):
  def test_empty_selection_no_write(self):
   with tempfile.TemporaryDirectory() as tmp:
    root,c,d=self.setup_apply(tmp);d['suggestions']=[];(root/'output/suggestions_20260915.yaml').write_text(yaml.safe_dump(d));before=digest(root/'coef/config.yaml');self.assertEqual(apply(c)['status'],'no_changes');self.assertEqual(before,digest(root/'coef/config.yaml'))
+ def test_apply_rechecks_both_threshold_and_ci(self):
+  for update in [{'improvement':.049},{'selection_improvement':.049},{'holdout_ci95':[-.01,.2]},{'selection_ci95':[-.01,.2]}]:
+   with self.subTest(update=update),tempfile.TemporaryDirectory() as tmp:
+    root,c,d=self.setup_apply(tmp);d['suggestions'][0].update(update)
+    (root/'output/suggestions_20260915.yaml').write_text(yaml.safe_dump(d));dump(root/'output/suggestions_20260915.validated.json',d)
+    before=digest(root/'coef/config.yaml')
+    with self.assertRaisesRegex(ValueError,'CI门槛'):apply(c)
+    self.assertEqual(before,digest(root/'coef/config.yaml'))
+ def test_apply_blocks_risk_without_downside_evidence(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   root,c,d=self.setup_apply(tmp);d['suggestions'][0]['task']='risk'
+   (root/'output/suggestions_20260915.yaml').write_text(yaml.safe_dump(d));dump(root/'output/suggestions_20260915.validated.json',d)
+   with self.assertRaisesRegex(ValueError,'风险建议缺少'):apply(c)
  def test_partial_failure_restores_both(self):
   with tempfile.TemporaryDirectory() as tmp:
    root,c,d=self.setup_apply(tmp);old=digest(root/'coef/config.yaml');import apply_config;real=apply_config.atomic;calls=[0]

@@ -22,11 +22,21 @@ suggest_window_days_by_task:
   price: 60
   risk: 60
 improve_threshold: 0.05
+# 选择与独立验证均要求上方改善幅度和日块CI下界>0；不再只在apply检查幅度。
+risk_candidate_validation:
+  min_complete_days: 10
+load_risk_diagnostics:
+  window_days: 90
+  min_complete_days: 7
+  recent_windows_days: [7, 14, 30]
 # 已弃用：价差基准现按对账窗口无条件多数基准自动计算（metrics.analyze），保留仅为历史配置兼容。
 price_baseline_accuracy: 0.6
 evidence_certified: false
 candidate_grid:
   load_forecast:
+    training.calendar_features:
+    - basic
+    - enhanced
     models.portfolio.ridge_alpha:
     - 100
     - 1000

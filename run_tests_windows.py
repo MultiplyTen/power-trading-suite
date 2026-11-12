@@ -25,6 +25,7 @@ SUITES = [
     ("load_forecast", "load_forecast", "load_forecast/tests", "load_forecast"),
     ("coefficient", "coefficient_opt", "coefficient_opt/tests", "coefficient_opt/tests"),
     ("review", "review", "review/tests", "review/tests"),
+    ("disclosure", "disclosure_ingest", "disclosure_ingest/tests", "disclosure_ingest/tests"),
 ]
 
 
