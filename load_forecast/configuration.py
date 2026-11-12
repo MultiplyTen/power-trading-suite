@@ -48,6 +48,7 @@ def validate(c):
             if b.get('model_selection_end'):
                 require(pd.Timestamp(b['model_selection_start'])<=pd.Timestamp(b['model_selection_end'])<a,'模型选参必须早于策略验证')
     require(t.get('day_type_granularity','binary') in ['six','binary'],'日型粒度只支持six/binary')
+    require(t.get('calendar_features','basic') in ['basic','enhanced'],'calendar_features只支持basic/enhanced')
     require(0<t.get('day_type_soft_weight',0.5)<=1,'日型软权重必须在(0,1]')
     for k in ['max_daily_adjustment_energy','max_daily_expected_loss']:
         require(s[k] is None or s[k]>=0,k+'不可为负')

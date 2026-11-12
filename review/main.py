@@ -13,6 +13,7 @@ from suggestions import generate
 from reporting import reports
 from apply_config import apply,rollback
 from disclosure_review import run as run_disclosure_review
+from load_risk import run as run_load_risk
 
 def main():
  prepare('review')
@@ -28,9 +29,10 @@ def main():
  from execution import analyze
  analyze(db,c,out)
  done,pending,cutoff=reconcile(db,c);logging.info('已对账 %s 条，待复盘 %s 条',len(done),len(pending))
- candidates,suggestions=generate(db,c,cutoff);files=reports(c,done,pending,cutoff,candidates,suggestions)
+ load_risk=run_load_risk(c,out)
+ candidates,suggestions=generate(db,c,cutoff);files=reports(c,done,pending,cutoff,candidates,suggestions,load_risk=load_risk)
  disclosure_review=run_disclosure_review(c,out)
- dump(out/'run_manifest.json',{'status':'completed','cutoff':str(cutoff.date()),'reconciled_rows':len(done),'pending_rows':len(pending),'reports':files,'suggestion_count':len(suggestions.get('suggestions',[])),'disclosure_review':disclosure_review,'config_changed':False});db.close();print('复盘完成；普通运行未改动配置。')
+ dump(out/'run_manifest.json',{'status':'completed','cutoff':str(cutoff.date()),'reconciled_rows':len(done),'pending_rows':len(pending),'reports':files,'load_risk_diagnostics':{'status':load_risk['status'],'files':load_risk['files']},'suggestion_count':len(suggestions.get('suggestions',[])),'disclosure_review':disclosure_review,'config_changed':False});db.close();print('复盘完成；普通运行未改动配置。')
 
 if __name__=='__main__':
  try:

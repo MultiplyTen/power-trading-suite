@@ -102,7 +102,7 @@ def reconcile(db,c):
   p.loc[p.kind.eq(kind)&~due,'review_status']='待复盘：尚未到该指标滞后天数'
 
  # 历史回放不冒充当时正式发布；可展示研究复盘，但必须保留晚发布标识。
- p['late_publication']=p.published_at>p.target.dt.normalize()-pd.Timedelta(days=1)+pd.Timedelta(hours=9)
+ p['late_publication']=p.published_at>p.target.dt.normalize()-pd.Timedelta(days=1)+pd.Timedelta(hours=c.get('decision_cutoff_hour',12),minutes=c.get('decision_cutoff_minute',30))
  done=p[p.review_status.eq('已复盘')].copy();pending=p[~p.review_status.eq('已复盘')].copy()
  # 同时刻多发布版本全部存库，指标仅取最新一个，避免重复权重。
  done['analysis_scope']=np.where(done.status.eq('production')&~done.late_publication,'production','research')

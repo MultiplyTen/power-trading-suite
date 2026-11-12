@@ -27,6 +27,8 @@ INPUTS = ROOT / "inputs" / "disclosure"
 
 class DisclosureParserTest(unittest.TestCase):
     def parse_member(self, zip_name, target_date):
+        if not (INPUTS / zip_name).is_file():
+            self.skipTest('依赖原始披露ZIP样例；公开版不附带业务输入，不能伪造样例覆盖')
         with zipfile.ZipFile(INPUTS / zip_name) as archive:
             info = next(
                 item for item in archive.infolist()

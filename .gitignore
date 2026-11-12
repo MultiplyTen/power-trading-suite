@@ -25,6 +25,8 @@ data_ingest/data/*.csv
 daily_inbox/
 daily_processed/
 inputs/
+!load_forecast/inputs/
+!load_forecast/inputs/*.py
 
 # 本地环境
 .workbuddy/

@@ -1,0 +1,87 @@
+{
+  "version": "1.2.1-research",
+  "date": "2026-11-12",
+  "base_commit": "69cf1547f062a0edbe02ee329217f4504e3c4778",
+  "scope": "source_tests_and_synthetic_only",
+  "environment": {
+    "python": "3.12.14",
+    "numpy": "2.5.1",
+    "pandas": "2.3.3",
+    "scipy": "1.18.0",
+    "scikit-learn": "1.9.0",
+    "PyYAML": "6.0.3",
+    "openpyxl": "3.1.5"
+  },
+  "suites": [
+    {
+      "name": "data_ingest",
+      "tests": 49,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "database",
+      "tests": 29,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "load_forecast",
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "coefficient",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1
+    },
+    {
+      "name": "review",
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "disclosure",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2
+    }
+  ],
+  "total_tests": 162,
+  "passed": 159,
+  "skipped": 3,
+  "skip_reasons": [
+    "coefficient companion-load test needs local business DB and price workbook",
+    "two disclosure parser tests need original actual/forecast ZIP fixtures absent from public repository"
+  ],
+  "source_parse_python39_grammar_files": 34,
+  "synthetic_report_workbooks": [
+    {
+      "name": "review_daily_20260820.xlsx",
+      "sheets": 14,
+      "formula_error_cells": 0
+    },
+    {
+      "name": "review_monthly_2026-08.xlsx",
+      "sheets": 13,
+      "formula_error_cells": 0
+    },
+    {
+      "name": "review_weekly_2026-34.xlsx",
+      "sheets": 13,
+      "formula_error_cells": 0
+    }
+  ],
+  "checked_local_report_links": 18,
+  "real_business_validation": "not_run",
+  "deployment_or_live_trading": "not_performed"
+}

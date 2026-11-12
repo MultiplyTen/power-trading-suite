@@ -1,0 +1,23 @@
+{
+  "scope": "synthetic",
+  "status": "passed",
+  "diagnostic": {
+    "json": "load_risk_20260820.json",
+    "hourly": "load_risk_20260820_hourly.csv",
+    "day_type": "load_risk_20260820_day_type.csv",
+    "recent": "load_risk_20260820_recent.csv",
+    "model_versions": "load_risk_20260820_model_versions.csv",
+    "paired_hours": "load_risk_20260820_paired_hours.csv"
+  },
+  "sample_hours": 336,
+  "complete_days": 14,
+  "signed_bias_mwh": 2.0,
+  "wmape": 0.16666666666666666,
+  "report_stems": [
+    "review_daily_20260820",
+    "review_weekly_2026-34",
+    "review_monthly_2026-08"
+  ],
+  "model_or_trade_executed": false,
+  "config_applied": false
+}

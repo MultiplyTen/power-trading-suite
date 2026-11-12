@@ -42,7 +42,7 @@ def walk(f,x,c,start,end,alpha,plugin,classification_mode=False,kind='load',save
         predmask=(f.index>=d)&(f.index<until+pd.Timedelta(days=1))
         if mask.sum()<max(240,c['training']['min_history_days']*24) or not predmask.any():continue
         model=create(plugin,alpha,classification_mode);model.fit(x.loc[mask],f.loc[mask,'target'])
-        model.meta=dict(label_end=str(label_end),fit_origin=str(d),feature_version='2.0',alpha=alpha,data_hash=hashlib.sha256(pd.util.hash_pandas_object(f.loc[mask]).values.tobytes()).hexdigest())
+        model.meta=dict(label_end=str(label_end),fit_origin=str(d),feature_version='2.1',calendar_features=c['training'].get('calendar_features','basic'),alpha=alpha,data_hash=hashlib.sha256(pd.util.hash_pandas_object(f.loc[mask]).values.tobytes()).hexdigest())
         p=model.predict_proba(x.loc[predmask]) if classification_mode else model.predict(x.loc[predmask])
         if kind=='load':p=np.maximum(f.loc[predmask,'baseline']+f.loc[predmask,'scale']*p,0)
         elif kind=='price':p=f.loc[predmask,'baseline']+p
@@ -92,10 +92,11 @@ def load_object(name,s,w,c,start,end,spec,tune=True):
     restricted=a.copy();restricted.loc[restricted.index<freeze,'actual']=np.nan
     inter=interval(restricted,c);a['p10']=inter.p10.clip(lower=0);a['p90']=inter.p90.clip(lower=0)
     model=models.get(chosen);co=[] if model is None else [dict(object=name,model=chosen,**r) for r in model.coefficients()]
-    return a,validation,dict(selected=chosen,parameters=params.get(chosen,{}),selection_status='validation_selected' if eligible else 'default_insufficient_validation'),co,trace,candidates[grid[-1][0]]
+    selection_status='fixed_specification' if not tune else ('validation_selected' if eligible else 'default_insufficient_validation')
+    return a,validation,dict(selected=chosen,parameters=params.get(chosen,{}),selection_status=selection_status,calendar_features=c['training'].get('calendar_features','basic')),co,trace,candidates[grid[-1][0]]
 
 def price_features(tables,sy,wx,c,end):
-    da=dense(tables['day_ahead'],end);rt=dense(tables['real_time'],end).reindex(da.index);sp=rt-da;x=calendar(da.index)
+    da=dense(tables['day_ahead'],end);rt=dense(tables['real_time'],end).reindex(da.index);sp=rt-da;x=calendar(da.index,c['training'].get('calendar_features','basic'))
     for name,s in [('da',da),('rt',rt),('spread',sp)]:
         for lag in sorted(set([c['run']['observation_lag_days'],7,14])):
             if lag>=c['run']['observation_lag_days']:x[f'{name}_lag{lag}']=s.shift(lag*24)

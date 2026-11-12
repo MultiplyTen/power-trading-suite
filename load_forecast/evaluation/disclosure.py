@@ -4,6 +4,7 @@
 import sqlite3
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 try:
@@ -15,6 +16,39 @@ except ModuleNotFoundError:
 
 def _connect(config):
     return sqlite3.connect(resolve(config, config["db_path"]))
+
+
+def _eligible_receipts(frame, config):
+    """Select the last received complete version known by each target's cutoff.
+
+    Callers supply forecast rows with complete quality. Feature generation and
+    target coverage must use this same receipt and version selection.
+    """
+    if frame.empty:
+        return frame.copy()
+    frame = frame.copy()
+    frame["target_start"] = pd.to_datetime(frame["target_start"], format="mixed").dt.tz_localize(None)
+    # Historical backfills and later revisions were not known at the target's
+    # decision origin. Receipt time is evidence of receipt, not source issue time.
+    # Naive database timestamps use the project's local clock, not UTC.
+    def local_receipt(value):
+        try:
+            ts = pd.Timestamp(value)
+            if pd.isna(ts):
+                return pd.NaT
+            return ts.tz_convert("Asia/Shanghai").tz_localize(None) if ts.tzinfo else ts
+        except (TypeError, ValueError):
+            return pd.NaT
+    frame["received_time"] = frame["ingested_at"].map(local_receipt)
+    run = config.get("run", {})
+    origins = (frame["target_start"].dt.normalize() - pd.Timedelta(days=1)
+               + pd.Timedelta(hours=run.get("decision_cutoff_hour", 12),
+                              minutes=run.get("decision_cutoff_minute", 30)))
+    frame = frame[frame["received_time"].notna() & (frame["received_time"] <= origins)].copy()
+    if frame.empty:
+        return frame
+    frame = frame.sort_values(["received_time", "source_id"])
+    return frame.drop_duplicates(["metric", "target_start"], keep="last")
 
 
 def read_disclosure_features(config):
@@ -32,11 +66,9 @@ def read_disclosure_features(config):
             """,
             connection,
         )
+    frame = _eligible_receipts(frame, config)
     if frame.empty:
         return pd.DataFrame()
-    frame["target_start"] = pd.to_datetime(frame["target_start"], format="mixed").dt.tz_localize(None)
-    frame = frame.sort_values(["ingested_at", "source_id"])
-    frame = frame.drop_duplicates(["metric", "target_start"], keep="last")
     pivot = frame.pivot(index="target_start", columns="metric", values="value")
     result = pd.DataFrame(index=pivot.index)
     for metric in pivot.columns:
@@ -82,25 +114,39 @@ def disclosure_status(config):
             {"record_kind": row[0], "days": row[1], "rows": row[2]}
             for row in coverage
         ],
-        "availability_basis": "forecast uses user-confirmed D-1 before-12:00 boundary; exact issue times are not certified",
+        "availability_basis": "features require receipt by configured D-1 decision cutoff; backfills excluded; original source issue times remain uncertified",
     }
 
 
 def disclosure_target_coverage(config, target_day):
     target_date = str(pd.Timestamp(target_day).date())
+    frame = pd.DataFrame()
     with _connect(config) as connection:
-        rows = connection.execute(
-            """SELECT metric,count(*) AS hours,
-                      sum(quality_status='complete') AS complete_hours
-               FROM disclosure_hourly
-               WHERE record_kind='forecast' AND target_date=?
-               GROUP BY metric ORDER BY metric""",
-            (target_date,),
-        ).fetchall()
-    metrics = [
-        {"metric": row[0], "hours": row[1], "complete_hours": row[2]}
-        for row in rows
-    ]
+        if connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='disclosure_hourly'"
+        ).fetchone():
+            frame = pd.read_sql_query(
+                """SELECT target_start, metric, value, ingested_at, source_id, quality_status
+                   FROM disclosure_hourly
+                   WHERE record_kind='forecast' AND target_date=?""",
+                connection,
+                params=(target_date,),
+            )
+    metrics = []
+    if not frame.empty:
+        selected = _eligible_receipts(frame[frame.quality_status.eq('complete')], config)
+        expected = pd.date_range(target_date, periods=24, freq='h')
+        # Duplicate versions or off-grid times must not manufacture 24-hour
+        # coverage. Only the model's expected unique hourly targets count.
+        selected = selected[selected.target_start.isin(expected)]
+        for metric in sorted(frame.metric.unique()):
+            values = selected[selected.metric.eq(metric)]
+            finite = np.isfinite(pd.to_numeric(values.value, errors='coerce'))
+            metrics.append({
+                "metric": metric,
+                "hours": int(values.target_start.nunique()),
+                "complete_hours": int(values.loc[finite, 'target_start'].nunique()),
+            })
     complete = [item for item in metrics if item["hours"] == 24 and item["complete_hours"] == 24]
     status = (
         "unavailable" if not metrics
@@ -114,5 +160,6 @@ def disclosure_target_coverage(config, target_day):
         "metric_count": len(metrics),
         "complete_metric_count": len(complete),
         "metrics": metrics,
+        "availability_basis": "latest complete version received by configured D-1 cutoff; unique hourly targets only",
         "policy": "missing target disclosure features remain NaN and are median-imputed inside the selected model; the run is explicitly degraded, not treated as full coverage",
     }

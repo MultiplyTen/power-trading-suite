@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """全范围候选扫描（进程池并行）；分任务窗口（负荷短/价格风险长）；
-候选选择与验证通过均以日块bootstrap CI下界>0为准，阈值仅辅助展示。"""
+候选选择与验证均要求配置改善幅度及日块bootstrap CI下界>0；风险证据另查尾损。"""
 import json,subprocess,sys,hashlib,logging,os
 from concurrent.futures import ProcessPoolExecutor,as_completed
 from pathlib import Path
@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 import yaml
 from common import resolve,digest,dump,get_path,stamp
+from candidate_checks import (daily_metric, daily_improvement, passes_improvement,
+                              risk_validation_guard, RISK_PARAMETERS)
 
 BOOTSTRAP_SAMPLES=2000
 
@@ -32,7 +34,7 @@ def generate(db,c,cutoff):
  root=Path(c['_root']);out=resolve(c,c['output_dir']);out.mkdir(parents=True,exist_ok=True);cache=out/'candidate_runs';cache.mkdir(exist_ok=True)
  actual=pd.read_sql_query('SELECT * FROM actuals',db);rows=[];suggest=[]
  date=pd.Timestamp(c['review_date']).normalize() if c['review_date']!='today' else pd.Timestamp.now().normalize()
- base_doc={'created_at':stamp(),'review_date':str(date.date()),'improve_threshold':c['improve_threshold'],'decision_rule':'候选选择与通过均要求日块bootstrap(2000次)CI下界>0；improve_threshold仅作展示参考','status':'insufficient_data','suggestions':[],'config_hashes':{k:digest(resolve(c,v)/'config.yaml') for k,v in c['project_paths'].items()}}
+ base_doc={'created_at':stamp(),'review_date':str(date.date()),'improve_threshold':c['improve_threshold'],'validation_contract':'review-v1.2.1','decision_rule':'选择与验证均要求改善幅度>=improve_threshold且日块bootstrap(2000次)CI下界>0；风险候选还要求同限额尾损/超限比例/场景可行率不恶化','status':'insufficient_data','suggestions':[],'config_hashes':{k:digest(resolve(c,v)/'config.yaml') for k,v in c['project_paths'].items()}}
  dest=out/f'suggestions_{date.strftime("%Y%m%d")}.yaml'
  def finish():
   dest.write_text(yaml.safe_dump(base_doc,allow_unicode=True,sort_keys=False),encoding='utf-8');dump(dest.with_suffix('.validated.json'),base_doc);dump(out/'suggestion_history'/(base_doc['created_at'].replace(':','')+'.json'),base_doc);frame=pd.DataFrame(rows);frame.to_csv(out/'candidate_comparison.csv',index=False);return frame,base_doc
@@ -73,12 +75,12 @@ def generate(db,c,cutoff):
    base_doc['blocked_reason']=name+'与对账实际值不一致，请先同步来源；本次不生成建议';return finish()
  fingerprints={k:hashlib.sha256(''.join(digest(p) for p in sorted(list(v.rglob('*.py'))+list((v/'data').glob('*'))) if p.is_file() and '__pycache__' not in p.parts).encode()).hexdigest() for k,v in projects.items()}
  shared_fingerprint=input_fingerprint(resolve(c,c['db_path']))+canonical_fingerprint(resolve(c,c['db_path']))
- def make_job(project,task,param=None,value=None,history=None):
+ def make_job(project,task,param=None,value=None,history=None,reference_risk=None):
   # 指纹含任务窗口起止：窗口变化自动使旧缓存失效；同指纹命中则跳过重跑。
   m=task_windows[task]
   key=hashlib.sha256(json.dumps([project,task,param,value],sort_keys=True).encode()).hexdigest()[:16];path=cache/(key+'.csv');jp=cache/(key+'.json')
-  job={'project_root':str(projects[project]),'task':task,'parameter':param,'value':value,'start':str(m['start'].date()),'end':str(m['end'].date()),'lag':c['actual_lag_days'],'output':str(path),'history':str(history) if history else None}
-  fingerprint=hashlib.sha256(json.dumps({'job':job,'config':base_doc['config_hashes'][project],'data_code':fingerprints[project],'shared_database':shared_fingerprint,'worker':digest(root/'tuning_worker.py'),'history':digest(history) if history else None},sort_keys=True).encode()).hexdigest();receipt=cache/(key+'.receipt.json')
+  job={'project_root':str(projects[project]),'task':task,'parameter':param,'value':value,'start':str(m['start'].date()),'end':str(m['end'].date()),'lag':c['actual_lag_days'],'output':str(path),'history':str(history) if history else None,'reference_risk':str(reference_risk) if reference_risk else None,'reference_risk_sha256':digest(reference_risk) if reference_risk else None}
+  fingerprint=hashlib.sha256(json.dumps({'job':job,'config':base_doc['config_hashes'][project],'data_code':fingerprints[project],'shared_database':shared_fingerprint,'worker':digest(root/'tuning_worker.py'),'risk_reference':digest(root/'reference_risk.py'),'history':digest(history) if history else None},sort_keys=True).encode()).hexdigest();receipt=cache/(key+'.receipt.json')
   cached=path.exists() and receipt.exists() and json.loads(receipt.read_text(encoding='utf-8')).get('fingerprint')==fingerprint
   if not cached:dump(jp,job)
   return dict(key=key,path=path,jp=jp,fingerprint=fingerprint,cached=cached,job=job)
@@ -104,7 +106,9 @@ def generate(db,c,cutoff):
    futs={ex.submit(_run_subprocess,str(root/'tuning_worker.py'),str(p['jp'])):p for p in todo}
    for fut in as_completed(futs):accept(futs[fut],fut.result())
  def load_frame(job_entry):
-  return pd.read_csv(job_entry['path'],parse_dates=['timestamp']).set_index('timestamp')
+  frame=pd.read_csv(job_entry['path'],parse_dates=['timestamp']).set_index('timestamp')
+  frame.attrs['artifact_sha256']=digest(job_entry['path'])
+  return frame
  # 批1（并行）：各任务基准（窗口数据不足的任务整体跳过，不阻断其他任务）；
  # 价格基准输出同时作为风险任务的历史输入。
  baseline_jobs={}
@@ -129,7 +133,7 @@ def generate(db,c,cutoff):
   except Exception as e:
    rows.append({'project':'load_forecast' if task=='load' else 'coefficient','task':task,'status':'基准失败','reason':str(e)})
    logging.warning('%s基准失败（该任务候选跳过）：%s',task,e)
- risk_params={'lambda_risk','confidence','error_shrink','smooth_limit','backtest_window_days'}
+ risk_params=RISK_PARAMETERS
  def task_of(project,param):
   return 'load' if project=='load_forecast' else ('risk' if param in risk_params else 'price')
  # 批2（并行）：负荷/价格候选 + 风险基准（依赖批1价格基准输出）。
@@ -151,15 +155,9 @@ def generate(db,c,cutoff):
     rows.append({'project':project,'task':task,'parameter':param,'old':json.dumps(old),'new':json.dumps(values[0]),'status':'跳过','reason':'风险任务基准不可用'});continue
    for value in values:
     if value==old:continue
-    candidate_jobs[(project,param,json.dumps(value))]=make_job(project,task,param,value,history=baselines['price'][1] if task=='risk' else None)
+    candidate_jobs[(project,param,json.dumps(value))]=make_job(project,task,param,value,history=baselines['price'][1] if task=='risk' else None,reference_risk=baselines['risk'][1] if task=='risk' else None)
  execute_batch(list(candidate_jobs.values()),strict=False)
  # 日块bootstrap CI：对逐日差序列（正=候选改善）做按日有放回重采样，取均值的95%区间。
- def daily_metric(frame,task):
-  if task=='load':
-   g=frame.groupby(frame.index.normalize());return g.apply(lambda x:float(abs(x.actual-x.prediction).sum()/max(float(x.actual.abs().sum()),1e-12)))
-  if task=='risk':
-   return frame.groupby(frame.index.normalize()).profit.mean()
-  g=frame.groupby(frame.index.normalize());return g.apply(lambda x:float((abs(x.da-x.da_hat).mean()+abs(x.rt-x.rt_hat).mean())/2))
  def day_ci(delta):
   return day_bootstrap_ci(delta,BOOTSTRAP_SAMPLES,42)
  def loss(frame,task,mask):
@@ -190,30 +188,40 @@ def generate(db,c,cutoff):
    old1,old2=loss(b,task,b1),loss(b,task,b2);new1,new2=loss(f,task,mask1),loss(f,task,mask2)
    imp1=(old1-new1)/max(abs(old1),1.0 if task=='risk' else 1e-9);imp2=(old2-new2)/max(abs(old2),1.0 if task=='risk' else 1e-9)
    # 日级差（正=候选改善）：loss类（负荷/价格）=基准日指标−候选日指标；收益类（风险）=候选日收益−基准日收益。
-   direction=1 if task=='risk' else -1
-   d_sel=direction*(daily_metric(b.loc[b1],task)-daily_metric(f.loc[mask1],task))
-   d_hold=direction*(daily_metric(b.loc[b2],task)-daily_metric(f.loc[mask2],task))
+   d_sel=daily_improvement(b.loc[b1],f.loc[mask1],task)
+   d_hold=daily_improvement(b.loc[b2],f.loc[mask2],task)
    ci_sel=day_ci(d_sel);ci_hold=day_ci(d_hold)
    row.update({'status':'已回测','selection_old_loss':old1,'selection_new_loss':new1,'selection_improvement':imp1,
     'selection_ci_low':ci_sel[0],'selection_ci_high':ci_sel[1],'selection_daily_mean':ci_sel[2],
     'holdout_old_loss':old2,'holdout_new_loss':new2,'holdout_improvement':imp2,
     'holdout_ci_low':ci_hold[0],'holdout_ci_high':ci_hold[1],'holdout_daily_mean':ci_hold[2],
     'artifact':str(candidate_jobs[key]['path'].relative_to(out))})
+   if task=='risk':
+    minimum=c.get('risk_candidate_validation',{}).get('min_complete_days',10)
+    row['risk_selection_validation']=risk_validation_guard(b.loc[b1],f.loc[mask1],minimum)
+    row['risk_holdout_validation']=risk_validation_guard(b.loc[b2],f.loc[mask2],minimum)
   except Exception as e:row.update({'status':'不能评估','reason':str(e)})
  from reconciliation import reconcile
  from metrics import analyze
  reviewed,_,_=reconcile(db,c);weakness=analyze(reviewed)['weakness'];priority='load' if weakness.startswith('负荷') else 'price' if weakness.startswith('价格') else 'risk';base_doc['weakness']=weakness;base_doc['priority_task']=priority
- # 判定（阶段4）：选择段改善>0且CI下界>0才成为候选；通过=验证段CI下界>0。improve_threshold仅展示。
- eligible=[r for r in rows if r.get('status')=='已回测' and r['task']==priority and r['selection_improvement']>0 and r.get('selection_ci_low') is not None and r['selection_ci_low']>0]
+ # Holdout never ranks candidates: choose once on selection evidence, then independently validate it.
+ eligible=[r for r in rows if r.get('status')=='已回测' and r['task']==priority
+           and passes_improvement(r['selection_improvement'],[r.get('selection_ci_low'),r.get('selection_ci_high')],c['improve_threshold'])
+           and (r['task']!='risk' or r.get('risk_selection_validation',{}).get('status')=='passed')]
  if eligible:
   chosen=max(eligible,key=lambda r:r['selection_improvement']);base_doc['selected_candidate']=chosen
-  passes=chosen.get('holdout_ci_low') is not None and chosen['holdout_ci_low']>0;base_doc['holdout_passed']=passes
+  passes=passes_improvement(chosen['holdout_improvement'],[chosen.get('holdout_ci_low'),chosen.get('holdout_ci_high')],c['improve_threshold'])
+  if priority=='risk':passes=passes and chosen.get('risk_holdout_validation',{}).get('status')=='passed'
+  base_doc['holdout_passed']=passes
   base_doc['scope_warning']='当前输入缺少完整发布时间审计，建议仅可回写研究模式配置；不能用于生产申报。'
   w=task_windows[priority]['window']
-  base_doc['research_candidate']={'project':chosen['project'],'parameter':chosen['parameter'],'old_value':json.loads(chosen['old']),'new_value':json.loads(chosen['new']),'improvement':chosen['holdout_improvement'],'selection_ci95':[chosen['selection_ci_low'],chosen['selection_ci_high']],'holdout_ci95':[chosen['holdout_ci_low'],chosen['holdout_ci_high']],'reason':f"前{w*2//3}天选择、后{w-w*2//3}天验证（日块bootstrap {BOOTSTRAP_SAMPLES} 次，判定=CI下界>0）；"+('验证通过' if passes else '验证段CI下界<=0，未通过')}
+  base_doc['research_candidate']={'project':chosen['project'],'task':priority,'parameter':chosen['parameter'],'old_value':json.loads(chosen['old']),'new_value':json.loads(chosen['new']),'improvement':chosen['holdout_improvement'],'selection_improvement':chosen['selection_improvement'],'selection_ci95':[chosen['selection_ci_low'],chosen['selection_ci_high']],'holdout_ci95':[chosen['holdout_ci_low'],chosen['holdout_ci_high']],'reason':f"前{w*2//3}天选择、后{w-w*2//3}天验证（日块bootstrap {BOOTSTRAP_SAMPLES} 次，改善幅度>={c['improve_threshold']:.1%}且CI下界>0；风险另查尾损）；"+('验证通过' if passes else '验证幅度/CI或风险非恶化证据未通过')}
+  if priority=='risk':
+   base_doc['research_candidate']['risk_selection_validation']=chosen['risk_selection_validation']
+   base_doc['research_candidate']['risk_holdout_validation']=chosen['risk_holdout_validation']
   if passes:
    base_doc['suggestions']=[dict(base_doc['research_candidate'],evidence_scope='research',validated=True)]
    base_doc['status']='research_suggestion_ready'
  else:
-  base_doc['blocked_reason']=f'当前短板优先任务 {priority} 的候选未同时满足：选择段改善>0且日块CI下界>0（含窗口数据不足被跳过的候选）；其他任务仅列对照，本次不生成参数变更。'
+  base_doc['blocked_reason']=f"当前短板优先任务 {priority} 的候选未同时满足：选择段改善>={c['improve_threshold']:.1%}且日块CI下界>0（风险另需同限额尾损不恶化证据，含窗口不足）；其他任务仅列对照，本次不生成参数变更。"
  return finish()

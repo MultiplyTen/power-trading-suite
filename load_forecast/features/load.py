@@ -22,7 +22,7 @@ def baseline(s,c,cal=None):
     num=np.zeros(len(s));den=np.zeros(len(s));total=np.zeros(len(s));count=np.zeros(len(s))
     if t.get('day_type_granularity','binary')=='six':
         # 六类日型硬匹配优先；仅当同日型累计权重不足（<min_type_weight，约一个最老样本）
-        # 时向同大类软借（分子×soft、证据量全计），仍无样本回退普通均值。
+        # 时向同大类软借（分子、分母均乘soft），仍无样本回退普通均值。
         # 日型比较用 shift（头部NaN不匹配），不用roll避免循环回绕。
         code,major=day_type_code(cal);soft=float(t.get('day_type_soft_weight',0.5))
         min_type_weight=float(t.get('day_type_min_weight',0.3))
@@ -35,7 +35,7 @@ def baseline(s,c,cal=None):
             num_s+=np.where(samemaj,yv*w,0);den_s+=np.where(samemaj,w,0)
             total+=np.where(valid,yv,0);count+=valid
         need=den<min_type_weight
-        num=np.where(need,num+soft*num_s,num);den=np.where(need,den+den_s,den)
+        num=np.where(need,num+soft*num_s,num);den=np.where(need,den+soft*den_s,den)
     else:
         work=cal.workday
         for lag in range(lag0,lag0+t['baseline_window_days']):
@@ -45,7 +45,7 @@ def baseline(s,c,cal=None):
     return pd.Series(np.where(np.isfinite(a),a,fallback),index=s.index)
 
 def make_features(s,w,c,threshold):
-    x=calendar(s.index);b=baseline(s,c,x);lag=c['run']['observation_lag_days']*24
+    x=calendar(s.index,c['training'].get('calendar_features','basic'));b=baseline(s,c,x);lag=c['run']['observation_lag_days']*24
     scale=s.shift(lag).rolling(c['training']['scale_window_hours'],min_periods=168).mean().clip(lower=c['training']['scale_floor'])
     for days in sorted(set([c['run']['observation_lag_days'],7,14])):
         if days>=c['run']['observation_lag_days']:x[f'load_lag{days}_relative']=(s.shift(days*24)-b)/scale
